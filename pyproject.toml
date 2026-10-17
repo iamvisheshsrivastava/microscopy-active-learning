@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "maldl"
+version = "0.1.0"
+description = "Small prototype: self-supervised embeddings + active learning on synthetic microstructures"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = ["numpy", "scikit-learn", "pillow", "matplotlib", "torch"]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

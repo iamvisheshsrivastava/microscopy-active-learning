@@ -1,0 +1,11 @@
+﻿seed 0: contrastive loss 4.848 -> 4.505
+seed 1: contrastive loss 4.847 -> 4.561
+seed 2: contrastive loss 4.856 -> 4.637
+seed 3: contrastive loss 4.820 -> 4.524
+seed 4: contrastive loss 4.842 -> 4.284
+
+Final-round accuracy (mean±std over 5 seeds), curve-mean in parens
+random       in_dist: 0.904±0.040 (0.858) | scale_shift: 0.608±0.052 (0.583) | source_shift: 0.256±0.014 (0.257)
+uncertainty  in_dist: 0.953±0.027 (0.893) | scale_shift: 0.546±0.057 (0.545) | source_shift: 0.246±0.010 (0.253)
+diversity    in_dist: 0.918±0.043 (0.874) | scale_shift: 0.561±0.044 (0.571) | source_shift: 0.251±0.018 (0.253)
+hybrid       in_dist: 0.961±0.029 (0.896) | scale_shift: 0.565±0.025 (0.572) | source_shift: 0.249±0.014 (0.250)

@@ -1,0 +1,11 @@
+﻿seed 0: random-init encoder (no pretraining)
+seed 1: random-init encoder (no pretraining)
+seed 2: random-init encoder (no pretraining)
+seed 3: random-init encoder (no pretraining)
+seed 4: random-init encoder (no pretraining)
+
+Final-round accuracy (mean±std over 5 seeds), curve-mean in parens
+random       in_dist: 0.917±0.024 (0.852) | scale_shift: 0.600±0.051 (0.584) | source_shift: 0.250±0.000 (0.250)
+uncertainty  in_dist: 0.915±0.035 (0.842) | scale_shift: 0.631±0.028 (0.599) | source_shift: 0.250±0.000 (0.250)
+diversity    in_dist: 0.919±0.029 (0.836) | scale_shift: 0.552±0.046 (0.545) | source_shift: 0.250±0.000 (0.250)
+hybrid       in_dist: 0.953±0.006 (0.866) | scale_shift: 0.539±0.066 (0.565) | source_shift: 0.250±0.000 (0.250)
