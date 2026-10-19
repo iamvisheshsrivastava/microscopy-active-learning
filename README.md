@@ -1,5 +1,7 @@
 # microscopy-active-learning
 
+[![ci](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml)
+
 A small, honest prototype: self-supervised embeddings of synthetic microstructure images, plus
 pool-based active learning, a property surrogate with uncertainty, and SEM+EBSD cross-modal
 pretraining, all evaluated under scale shift and instrument shift. **This is a toy pipeline, not research.**
@@ -162,6 +164,8 @@ structure here, so the alignment learned is coarse.
 - No hyperparameter search, no pretrained-backbone baseline, no GPU runs yet.
 
 ## Roadmap (real data first)
+
+Tracked as [issues #1-#9](https://github.com/iamvisheshsrivastava/microscopy-active-learning/issues).
 
 1. UHCSDB (NIST, CC BY-SA 3.0) and the Aachen–Heerlen steel SEM set: sample-grouped splits (`data/splits.py`), leave-one-source-out evaluation, real magnification metadata.
 2. Real SEM+EBSD pairs (e.g. the Georgia Tech dual-phase steel set, if its sample correspondence holds, or IAS-9 partner data) in place of the synthetic pair generator.
