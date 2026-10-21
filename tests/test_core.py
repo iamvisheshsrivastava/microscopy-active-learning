@@ -148,6 +148,28 @@ def test_load_table(tmp_path):
     assert x.shape == (4, 1, 16, 16) and classes == ["a", "b"] and meta["group"][0] == "s0"
 
 
+def test_load_uhcsdb_layout(tmp_path):
+    from maldl.data.uhcsdb import load_uhcsdb
+    (tmp_path / "micrographs").mkdir()
+    cols = ["micrograph_id", "path", "primary_microconstituent", "detector", "magnification",
+            "sample_key"]
+    recs = [("1", "a.png", "pearlite", "SE", "1000x", "7.0"),
+            ("2", "b.png", "network", "BSE", "2000X", ""),
+            ("3", "c.png", "pearlite", "", "", "")]
+    for _, p, *_ in recs:
+        Image.fromarray((np.random.default_rng(0).random((522, 645)) * 255).astype(np.uint8)
+                        ).save(tmp_path / "micrographs" / p)
+    with open(tmp_path / "metadata.csv", "w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(cols)
+        w.writerows(recs)
+    x, meta, classes = load_uhcsdb(tmp_path, size=32)
+    assert x.shape == (3, 1, 32, 32) and classes == ["network", "pearlite"]
+    assert meta["magnification"][:2].tolist() == [1000.0, 2000.0] and np.isnan(meta["magnification"][2])
+    assert meta["detector"].tolist() == ["SE", "BSE", "unknown"]
+    assert len(set(meta["group"])) == 3  # missing specimen ids never merged into one group
+
+
 def test_stats_summary():
     rows = [{"strategy": s, "seed": sd, "round": r, "m": 0.5 + 0.1 * r + (0.05 if s == "b" else 0)
              + 0.01 * sd} for s in "ab" for sd in range(6) for r in range(3)]

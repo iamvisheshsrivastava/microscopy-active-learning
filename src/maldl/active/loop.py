@@ -5,9 +5,11 @@ Regression: GP surrogate on the embeddings, uncertainty = predictive std.
 Eval sets: {name: (emb, y_class, y_property)}; classification only needs the first two,
 regression needs the third.
 """
+import warnings
+
 import numpy as np
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import r2_score
+from sklearn.metrics import balanced_accuracy_score, r2_score
 from sklearn.preprocessing import StandardScaler
 
 from ..eval.calibration import ece, interval_coverage
@@ -53,6 +55,9 @@ def run_loop(pool_emb, pool_y, eval_sets, strategy, init=8, batch=8, rounds=8,
             e, y = v[0], v[1]
             p = _proba(sc, clf, e, num_classes)
             row[name] = float((p.argmax(1) == y).mean())
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                row[f"{name}_bacc"] = float(balanced_accuracy_score(y, p.argmax(1)))
             row[f"{name}_ece"] = ece(p, y)
             row[f"{name}_conf"] = float(p.max(1).mean())
         rows.append(row)

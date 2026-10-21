@@ -2,11 +2,13 @@
 
 [![ci](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml)
 
-A small, honest prototype: self-supervised embeddings of synthetic microstructure images, plus
+A small, honest prototype: self-supervised embeddings of microstructure images, plus
 pool-based active learning, a property surrogate with uncertainty, and SEM+EBSD cross-modal
-pretraining, all evaluated under scale shift and instrument shift. **This is a toy pipeline, not research.**
-The data is synthetic, the scale is tiny, and most results below are negative or mixed. They show
-what a real study has to beat, not that anything works.
+pretraining, evaluated under scale shift and instrument shift. Most experiments use a synthetic
+generator; one section ([Real data: UHCSDB](#real-data-uhcsdb-961-steel-sem-micrographs)) runs the
+same active-learning harness on real steel micrographs with specimen-grouped splits.
+**This is a toy pipeline, not research.** The scale is tiny and most results below are negative or
+mixed. They show what a real study has to beat, not that anything works.
 
 ## Problem
 
@@ -40,6 +42,9 @@ python scripts/run_experiment.py --norm-input --strong-aug --tag _robust     # i
 python scripts/run_experiment.py --epochs 0 --norm-input --tag _noprtrain    # no-pretraining ablation
 python scripts/run_surrogate_al.py                                           # property surrogate AL
 python scripts/run_multimodal.py                                             # SEM+EBSD cross-modal
+
+# real data (see "Real data" below for where to get it)
+python scripts/run_real.py --epochs 60 --tag _real_contrastive
 ```
 
 Each run writes `results/<name>.csv` (every seed/round), `.png` curves, and `_summary.md` tables.
@@ -153,21 +158,63 @@ Cross-modal pretraining gives the best property R² in-distribution (0.74 vs 0.6
 all encoders are poor under instrument shift. With 5 seeds I make no significance claim. Retrieval on 300 held-out pairs: exact-pair recall@1 0.005 (chance 0.003) and recall@10 0.059 (chance 0.033) are near chance, while the retrieved EBSD map has the right class 45% of the time (chance 25%; 29% under instrument shift). The two modalities share only coarse
 structure here, so the alignment learned is coarse.
 
+## Real data: UHCSDB (961 steel SEM micrographs)
+
+**Data.** UHCSDB (DeCost et al., *Integr. Mater. Manuf. Innov.* 6, 197-205, 2017, doi:10.1007/s40192-017-0097-0; CC BY 3.0 US).
+The NIST host (`hdl.handle.net/11256/940`) did not respond when I tried it (HTTP 502/404), so I used the Zenodo-archived
+GitHub mirror [rydia001/UHCS_micrographs_mirror](https://github.com/rydia001/UHCS_micrographs_mirror)
+(doi:10.5281/zenodo.23050463). All 961 image files matched the mirror's SHA-256 manifest. I could not compare against NIST, so I
+rely on the mirror's own manifest. Data is not committed; clone the mirror to `data/raw/uhcs_mirror`.
+
+**Task.** 7-class *primary microconstituent* (spheroidite, network, pearlite, pearlite+spheroidite, spheroidite+widmanstatten,
+martensite, pearlite+widmanstatten). Images are cropped (SEM info banner removed), centre-square-cropped and resized to 64×64.
+
+**Protocol (`scripts/run_real.py`).**
+- Splits are by **specimen**, never by image. Images without a specimen id (~160 of 961) are **excluded**, because unknown specimens cannot be kept apart safely.
+- Pool: SE-detector, low-magnification images of pool specimens (magnification ≤ median 1473x). Test specimens are disjoint.
+- Real shifts, using held-out specimens only: `mag_shift` = SE detector at high magnification; `detector_shift` = BSE detector.
+- 10 seeds (different specimen splits); about 190 pool images, 128/107/34 test images (in-dist / mag-shift / detector-shift) on average.
+- 14 initial labels, +10 per round, 8 rounds (94 labels). Same encoder, heads and statistics as above (Wilcoxon on ALC vs random, uncorrected).
+- Full tables incl. balanced accuracy and ECE: `results/results_real_*_summary.md`.
+
+**Results, accuracy at 94 labels (mean±std over 10 seeds).** Majority-class accuracy is 0.348 / 0.170 / 0.300 on the three sets.
+
+| encoder | strategy | in_dist | mag_shift | detector_shift |
+|---|---|---|---|---|
+| contrastive | random | 0.553±0.074 | 0.428±0.103 | 0.372±0.073 |
+| contrastive | uncertainty | 0.545±0.052 | 0.397±0.083 | 0.343±0.091 |
+| contrastive | diversity | 0.568±0.078 | 0.381±0.061 | 0.324±0.085 |
+| contrastive | hybrid | 0.546±0.054 | 0.375±0.074 | 0.306±0.131 |
+| random-init | random | 0.563±0.072 | 0.354±0.084 | 0.401±0.164 |
+| random-init | uncertainty | 0.555±0.055 | 0.352±0.093 | 0.383±0.180 |
+| random-init | diversity | 0.558±0.059 | 0.257±0.086 | 0.321±0.121 |
+| random-init | hybrid | 0.571±0.048 | 0.331±0.078 | 0.358±0.205 |
+| contrastive + norm + strong aug | random | 0.528±0.068 | 0.398±0.131 | 0.180±0.087 |
+| random-init + norm | random | 0.549±0.056 | 0.417±0.080 | 0.226±0.152 |
+
+What this does and does not say:
+- **The task is hard for this pipeline:** ~0.55 accuracy in-distribution against a 0.35 majority baseline; balanced accuracy is only ~0.3 (7 classes, strong imbalance).
+- **No active strategy beats random anywhere.** Every in-distribution ALC difference vs random is within ±0.02 with p≥0.16. The one significant result is negative: `diversity` is worse than random under magnification shift with a random-init encoder (−0.073, p<0.01). With dozens of uncorrected comparisons per encoder, treat isolated p-values lightly.
+- **Contrastive pretraining is not better than a random-init encoder** (in-dist 0.553 vs 0.563 for `random`).
+- **Detector shift (SE→BSE):** accuracy is about the majority-class rate or below (0.30), and with per-image normalisation it drops to 0.18-0.23, *below* the majority baseline. The normalisation/strong-augmentation trick that helped the synthetic instrument shift does **not** transfer to this real detector shift. The BSE test sets are small (~34 images from a few specimens), so these numbers are noisy.
+- Conclusion: the synthetic benchmark is not predictive of real behaviour (active-learning "gains" and the robustness trick both failed to transfer). A real study needs stronger representations (pretrained backbones, more pretraining data) before active learning can be meaningfully assessed.
+
 ## Limitations
 
-- **Synthetic data only.** Classes, property and cost are invented, easy to separate, and share the generator with the test sets. Nothing here is evidence about real microscopy.
+- **Mostly synthetic.** Sections 1-7 use synthetic classes, property and cost that are invented, easy to separate, and share the generator with the test sets; the real-data section shows they do not predict real behaviour. The real-data run covers one dataset, one task (microconstituent classification, no EBSD, no properties) and ~190 pool images.
 - **Small scale.** 600-image pool, 64×64 images, 3-block CNN, 15 epochs, 5–10 seeds. Differences of a few points are within noise; p-values are uncorrected.
 - **Scale shift is partly label-ambiguous by design** (a magnified fine texture looks coarse), so some loss is unavoidable without magnification metadata.
 - **Mixed-up comparisons.** The no-pretraining ablation differs from the baseline in input normalisation; I did not run the full 2×2.
 - **Cross-modal setup is toy:** EBSD is a deterministic function of the same latent grains; no flips/rotations in cross-modal training (orientation encoding); no real registration error.
-- The real-data loaders (`data/folder.py`) and group splits are unit-tested on synthetic files only.
+- The UHCSDB loader and group splits are unit-tested on synthetic files; real-data runs use a third-party mirror (hash-verified against its own manifest only).
+- Real-data images are 64×64 squares cropped from larger micrographs, losing fine detail and part of the field of view.
 - No hyperparameter search, no pretrained-backbone baseline, no GPU runs yet.
 
 ## Roadmap (real data first)
 
 Tracked as [issues #1-#9](https://github.com/iamvisheshsrivastava/microscopy-active-learning/issues).
 
-1. UHCSDB (NIST, CC BY-SA 3.0) and the Aachen–Heerlen steel SEM set: sample-grouped splits (`data/splits.py`), leave-one-source-out evaluation, real magnification metadata.
+1. ~~UHCSDB baseline with grouped splits~~ (done above). Next: the Aachen–Heerlen steel SEM set as a second source, larger images, leave-one-source-out evaluation.
 2. Real SEM+EBSD pairs (e.g. the Georgia Tech dual-phase steel set, if its sample correspondence holds, or IAS-9 partner data) in place of the synthetic pair generator.
 3. Scale-conditioned / scale-equivariant representation; stronger backbones (ViT, DINOv2-style) with pretrained and supervised baselines on GPU.
 4. Calibrated, shift-aware uncertainty (ensembles, conformal) and cost-aware batch acquisition (BADGE, BALD) with measured acquisition costs.
