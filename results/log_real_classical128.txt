@@ -1,0 +1,70 @@
+﻿961 images, 201 specimens, classes=['martensite', 'network', 'pearlite', 'pearlite+spheroidite', 'pearlite+widmanstatten', 'spheroidite', 'spheroidite+widmanstatten'], median mag split=1473x
+seed 0: pool 175, classical features
+seed 1: pool 193, classical features
+seed 2: pool 217, classical features
+seed 3: pool 198, classical features
+seed 4: pool 186, classical features
+seed 5: pool 211, classical features
+seed 6: pool 199, classical features
+seed 7: pool 188, classical features
+seed 8: pool 167, classical features
+seed 9: pool 191, classical features
+Encoder: classical (norm_input=False, strong_aug=False); 7 classes; mean sizes: in_dist=128, mag_shift=107, detector_shift=34, pool=192
+Majority-class accuracy (predict most frequent pool class): in_dist=0.348, mag_shift=0.170, detector_shift=0.300
+
+## Accuracy
+
+Final round, mean±std over 10 seeds; ALC (mean over rounds) in parentheses.
+
+| strategy | in_dist | mag_shift | detector_shift |
+|---|---|---|---|
+| random | 0.608±0.072 (0.595) | 0.406±0.061 (0.376) | 0.299±0.135 (0.297) |
+| uncertainty | 0.632±0.044 (0.596) | 0.430±0.048 (0.373) | 0.272±0.107 (0.248) |
+| diversity | 0.614±0.074 (0.584) | 0.439±0.091 (0.388) | 0.273±0.167 (0.278) |
+| hybrid | 0.642±0.061 (0.600) | 0.453±0.092 (0.409) | 0.296±0.107 (0.287) |
+
+ALC difference vs `random`: mean diff [95% bootstrap CI over seeds], Wilcoxon p, Holm-adjusted p over all 9 cells of this table (p cannot go below ~0.002 with 10 seeds).
+
+| strategy | in_dist | mag_shift | detector_shift |
+|---|---|---|---|
+| uncertainty | +0.001 [-0.025, +0.021] p=0.49 (Holm 1.00) | -0.003 [-0.045, +0.033] p=0.77 (Holm 1.00) | -0.048 [-0.152, +0.033] p=0.77 (Holm 1.00) |
+| diversity | -0.011 [-0.028, +0.006] p=0.20 (Holm 1.00) | +0.012 [-0.034, +0.058] p=0.56 (Holm 1.00) | -0.018 [-0.064, +0.037] p=0.38 (Holm 1.00) |
+| hybrid | +0.005 [-0.016, +0.024] p=0.49 (Holm 1.00) | +0.033 [+0.000, +0.070] p=0.19 (Holm 1.00) | -0.010 [-0.117, +0.075] p=0.70 (Holm 1.00) |
+
+## Balanced accuracy
+
+Final round, mean±std over 10 seeds; ALC (mean over rounds) in parentheses.
+
+| strategy | in_dist_bacc | mag_shift_bacc | detector_shift_bacc |
+|---|---|---|---|
+| random | 0.326±0.048 (0.318) | 0.223±0.094 (0.191) | 0.221±0.098 (0.222) |
+| uncertainty | 0.344±0.032 (0.319) | 0.183±0.051 (0.178) | 0.206±0.101 (0.193) |
+| diversity | 0.340±0.073 (0.315) | 0.203±0.066 (0.176) | 0.207±0.149 (0.213) |
+| hybrid | 0.359±0.072 (0.317) | 0.180±0.042 (0.173) | 0.228±0.131 (0.221) |
+
+ALC difference vs `random`: mean diff [95% bootstrap CI over seeds], Wilcoxon p, Holm-adjusted p over all 9 cells of this table (p cannot go below ~0.002 with 10 seeds).
+
+| strategy | in_dist_bacc | mag_shift_bacc | detector_shift_bacc |
+|---|---|---|---|
+| uncertainty | +0.001 [-0.020, +0.021] p=0.70 (Holm 1.00) | -0.013 [-0.058, +0.019] p=1.00 (Holm 1.00) | -0.029 [-0.081, +0.013] p=0.70 (Holm 1.00) |
+| diversity | -0.003 [-0.026, +0.019] p=0.92 (Holm 1.00) | -0.015 [-0.064, +0.027] p=0.70 (Holm 1.00) | -0.010 [-0.045, +0.039] p=0.23 (Holm 1.00) |
+| hybrid | -0.001 [-0.021, +0.014] p=0.56 (Holm 1.00) | -0.018 [-0.060, +0.018] p=0.32 (Holm 1.00) | -0.002 [-0.075, +0.069] p=0.70 (Holm 1.00) |
+
+## Expected calibration error (lower is better)
+
+Final round, mean±std over 10 seeds; ALC (mean over rounds) in parentheses.
+
+| strategy | in_dist_ece | mag_shift_ece | detector_shift_ece |
+|---|---|---|---|
+| random | 0.242±0.048 (0.240) | 0.449±0.070 (0.461) | 0.547±0.123 (0.555) |
+| uncertainty | 0.239±0.041 (0.261) | 0.432±0.061 (0.466) | 0.573±0.094 (0.605) |
+| diversity | 0.225±0.047 (0.238) | 0.389±0.107 (0.436) | 0.567±0.139 (0.551) |
+| hybrid | 0.216±0.044 (0.242) | 0.407±0.081 (0.445) | 0.539±0.100 (0.547) |
+
+ALC difference vs `random`: mean diff [95% bootstrap CI over seeds], Wilcoxon p, Holm-adjusted p over all 9 cells of this table (p cannot go below ~0.002 with 10 seeds).
+
+| strategy | in_dist_ece | mag_shift_ece | detector_shift_ece |
+|---|---|---|---|
+| uncertainty | +0.021 [+0.004, +0.042] p=0.08 (Holm 0.76) | +0.005 [-0.030, +0.045] p=0.85 (Holm 1.00) | +0.050 [-0.020, +0.117] p=0.19 (Holm 1.00) |
+| diversity | -0.001 [-0.014, +0.010] p=1.00 (Holm 1.00) | -0.025 [-0.062, +0.010] p=0.32 (Holm 1.00) | -0.004 [-0.061, +0.047] p=0.85 (Holm 1.00) |
+| hybrid | +0.002 [-0.015, +0.020] p=0.92 (Holm 1.00) | -0.016 [-0.055, +0.029] p=0.13 (Holm 1.00) | -0.008 [-0.083, +0.064] p=1.00 (Holm 1.00) |

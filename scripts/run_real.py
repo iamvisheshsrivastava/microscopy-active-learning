@@ -20,6 +20,7 @@ from maldl.active.strategies import STRATEGIES  # noqa: E402
 from maldl.data.splits import group_split  # noqa: E402
 from maldl.data.uhcsdb import load_uhcsdb  # noqa: E402
 from maldl.eval.stats import curves, markdown_summary  # noqa: E402
+from maldl.models.classical import classical_embed  # noqa: E402
 from maldl.models.encoder import Encoder  # noqa: E402
 from maldl.training.contrastive import embed, pretrain  # noqa: E402
 
@@ -54,7 +55,8 @@ def main(argv=None):
     ap.add_argument("--size", type=int, default=64)
     ap.add_argument("--seeds", type=int, default=10)
     ap.add_argument("--epochs", type=int, default=40)
-    ap.add_argument("--encoder", choices=["contrastive", "random"], default="contrastive")
+    ap.add_argument("--encoder", choices=["contrastive", "random", "classical"],
+                    default="contrastive")
     ap.add_argument("--norm-input", action="store_true")
     ap.add_argument("--strong-aug", action="store_true")
     ap.add_argument("--init", type=int, default=14)
@@ -84,9 +86,11 @@ def main(argv=None):
                   f"eval sizes { {k: len(v) for k, v in ev.items()} }", flush=True)
         else:
             enc.eval()
-            print(f"seed {seed}: pool {len(pool)}, random-init encoder", flush=True)
-        emb_pool = embed(enc, x[pool])
-        evals = {k: (embed(enc, x[i]), meta["y"][i]) for k, i in ev.items()}
+            print(f"seed {seed}: pool {len(pool)}, {a.encoder} features", flush=True)
+        emb_fn = (lambda im: classical_embed(im)) if a.encoder == "classical" else (
+            lambda im: embed(enc, im))
+        emb_pool = emb_fn(x[pool])
+        evals = {k: (emb_fn(x[i]), meta["y"][i]) for k, i in ev.items()}
         maj = np.bincount(meta["y"][pool], minlength=nc).argmax()
         majority.append({k: float((meta["y"][i] == maj).mean()) for k, i in ev.items()})
         sizes.append({k: len(i) for k, i in ev.items()} | {"pool": len(pool)})

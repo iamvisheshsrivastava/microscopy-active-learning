@@ -170,13 +170,32 @@ def test_load_uhcsdb_layout(tmp_path):
     assert len(set(meta["group"])) == 3  # missing specimen ids never merged into one group
 
 
+def test_classical_features_shape_and_contrast_invariance():
+    from maldl.models.classical import classical_embed
+    x, _ = make_dataset(6, seed=0, size=32)
+    f = classical_embed(x)
+    assert f.shape[0] == 6 and f.shape[1] == 16 + 3 * (2 + 8 + 8) + 9 and np.isfinite(f).all()
+    assert np.allclose(f, classical_embed(0.5 * x + 0.2), atol=1e-4)  # contrast/brightness invariant
+    assert np.array_equal(f, classical_embed(x))  # deterministic
+
+
 def test_stats_summary():
     rows = [{"strategy": s, "seed": sd, "round": r, "m": 0.5 + 0.1 * r + (0.05 if s == "b" else 0)
              + 0.01 * sd} for s in "ab" for sd in range(6) for r in range(3)]
     d, p = paired_test(np.arange(6) + 1.0, np.arange(6) * 1.0)
     assert d == 1.0 and p < 0.05
     md = markdown_summary(rows, ["a", "b"], ["m"], baseline="a")
-    assert "+0.050" in md
+    assert "+0.050" in md and "Holm" in md
+
+
+def test_holm_and_bootstrap():
+    from maldl.eval.stats import bootstrap_ci, holm
+    assert holm([0.01, 0.04, 0.03]) == pytest.approx([0.03, 0.06, 0.06])
+    assert all(a >= p for a, p in zip(holm([0.2, 0.01, 0.5]), [0.2, 0.01, 0.5]))
+    lo, hi = bootstrap_ci(np.full(8, 0.1))
+    assert lo == pytest.approx(0.1) and hi == pytest.approx(0.1)
+    lo, hi = bootstrap_ci(np.arange(10, dtype=float))
+    assert lo < 4.5 < hi
 
 
 def test_end_to_end_smoke():

@@ -10,14 +10,14 @@ Final round, mean±std over 10 seeds; ALC (mean over rounds) in parentheses.
 | hybrid | 0.881±0.031 (0.790) | 0.549±0.044 (0.525) | 0.276±0.041 (0.267) |
 | cost_uncertainty | 0.753±0.043 (0.716) | 0.525±0.059 (0.524) | 0.268±0.035 (0.273) |
 
-ALC difference vs `random` (mean diff, Wilcoxon p; p cannot go below ~0.002 with 10 seeds).
+ALC difference vs `random`: mean diff [95% bootstrap CI over seeds], Wilcoxon p, Holm-adjusted p over all 12 cells of this table (p cannot go below ~0.002 with 10 seeds).
 
 | strategy | in_dist | scale_shift | source_shift |
 |---|---|---|---|
-| uncertainty | +0.008 (p=0.43) | +0.011 (p=0.49) | -0.019 (p=0.07) |
-| diversity | -0.018 (p=0.28) | -0.010 (p=0.56) | -0.009 (p=0.28) |
-| hybrid | +0.015 (p=0.16) | +0.002 (p=0.70) | -0.014 (p=0.11) |
-| cost_uncertainty | -0.060 (p=0.00) | +0.001 (p=0.70) | -0.007 (p=0.77) |
+| uncertainty | +0.008 [-0.017, +0.029] p=0.43 (Holm 1.00) | +0.011 [-0.016, +0.037] p=0.49 (Holm 1.00) | -0.019 [-0.038, +0.000] p=0.07 (Holm 0.82) |
+| diversity | -0.018 [-0.046, +0.011] p=0.28 (Holm 1.00) | -0.010 [-0.040, +0.021] p=0.56 (Holm 1.00) | -0.009 [-0.025, +0.006] p=0.28 (Holm 1.00) |
+| hybrid | +0.015 [-0.004, +0.032] p=0.16 (Holm 1.00) | +0.002 [-0.018, +0.027] p=0.70 (Holm 1.00) | -0.014 [-0.028, +0.000] p=0.11 (Holm 1.00) |
+| cost_uncertainty | -0.060 [-0.091, -0.032] p=0.00 (Holm 0.05) | +0.001 [-0.035, +0.035] p=0.70 (Holm 1.00) | -0.007 [-0.035, +0.019] p=0.77 (Holm 1.00) |
 
 ## Expected calibration error (lower is better)
 
@@ -31,24 +31,11 @@ Final round, mean±std over 10 seeds; ALC (mean over rounds) in parentheses.
 | hybrid | 0.042±0.017 (0.083) | 0.338±0.042 (0.327) | 0.658±0.095 (0.679) |
 | cost_uncertainty | 0.168±0.046 (0.149) | 0.385±0.062 (0.348) | 0.701±0.078 (0.677) |
 
-ALC difference vs `random` (mean diff, Wilcoxon p; p cannot go below ~0.002 with 10 seeds).
+ALC difference vs `random`: mean diff [95% bootstrap CI over seeds], Wilcoxon p, Holm-adjusted p over all 12 cells of this table (p cannot go below ~0.002 with 10 seeds).
 
 | strategy | in_dist_ece | scale_shift_ece | source_shift_ece |
 |---|---|---|---|
-| uncertainty | +0.013 (p=0.43) | +0.014 (p=0.92) | +0.056 (p=0.11) |
-| diversity | -0.004 (p=0.77) | -0.013 (p=0.56) | +0.006 (p=0.85) |
-| hybrid | -0.000 (p=0.92) | +0.017 (p=0.23) | +0.033 (p=0.23) |
-| cost_uncertainty | +0.066 (p=0.00) | +0.037 (p=0.05) | +0.031 (p=0.43) |
-
-## Mean top-label confidence (compare with accuracy: overconfidence under shift)
-
-Final round, mean±std over 10 seeds; ALC (mean over rounds) in parentheses.
-
-| strategy | in_dist_conf | scale_shift_conf | source_shift_conf |
-|---|---|---|---|
-| random | 0.885±0.013 (0.841) | 0.860±0.011 (0.831) | 0.934±0.078 (0.926) |
-
-ALC difference vs `random` (mean diff, Wilcoxon p; p cannot go below ~0.002 with 10 seeds).
-
-| strategy | in_dist_conf | scale_shift_conf | source_shift_conf |
-|---|---|---|---|
+| uncertainty | +0.013 [-0.005, +0.036] p=0.43 (Holm 1.00) | +0.014 [-0.012, +0.045] p=0.92 (Holm 1.00) | +0.056 [-0.000, +0.112] p=0.11 (Holm 1.00) |
+| diversity | -0.004 [-0.020, +0.013] p=0.77 (Holm 1.00) | -0.013 [-0.049, +0.021] p=0.56 (Holm 1.00) | +0.006 [-0.039, +0.050] p=0.85 (Holm 1.00) |
+| hybrid | -0.000 [-0.016, +0.017] p=0.92 (Holm 1.00) | +0.017 [-0.010, +0.039] p=0.23 (Holm 1.00) | +0.033 [-0.004, +0.072] p=0.23 (Holm 1.00) |
+| cost_uncertainty | +0.066 [+0.036, +0.099] p=0.00 (Holm 0.02) | +0.037 [+0.001, +0.075] p=0.05 (Holm 0.54) | +0.031 [-0.036, +0.101] p=0.43 (Holm 1.00) |

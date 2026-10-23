@@ -28,14 +28,14 @@ meant to be re-run on real data (see Roadmap).
 | Active learning / experimental design under cost and uncertainty | 5 query strategies incl. an assumed-cost-aware one; learning curves vs labels and vs cost; paired significance tests |
 | Surrogates from representations to properties | GP on embeddings predicting a synthetic hardness; active learning for regression; interval coverage |
 | Uncertainty modelling | ECE and confidence for the classifier; 90% interval coverage for the GP |
-| Open-source research software | Seeded CLIs, 25 tests, CI, group-aware splits and a metadata-CSV loader for real data |
+| Open-source research software | Seeded CLIs, 28 tests, CI, group-aware splits and a metadata-CSV loader for real data |
 
 ## Quick start
 
 ```bash
 pip install torch                      # CPU is fine; --device cuda works if available
 pip install -e ".[dev]"
-pytest -q                              # 25 tests, ~35 s
+pytest -q                              # 28 tests, ~30 s
 
 python scripts/run_experiment.py --tag _baseline                             # ~16 min, 10 seeds
 python scripts/run_experiment.py --norm-input --strong-aug --tag _robust     # instrument-robustness variant
@@ -45,6 +45,9 @@ python scripts/run_multimodal.py                                             # S
 
 # real data (see "Real data" below for where to get it)
 python scripts/run_real.py --epochs 60 --tag _real_contrastive
+python scripts/run_real.py --encoder classical --size 128 --tag _real_classical128   # handcrafted baseline
+
+python scripts/resummarize.py          # regenerate summaries with Holm p-values and bootstrap CIs
 ```
 
 Each run writes `results/<name>.csv` (every seed/round), `.png` curves, and `_summary.md` tables.
@@ -64,8 +67,10 @@ Pool of 600 per seed, 3-conv-block CNN encoder (128-d), 15 NT-Xent epochs on the
 frozen. Classification head: logistic regression. Start with 8 labels, +8 per round, 8 rounds (72 labels).
 Test sets: 300 images each, from seeds disjoint from training. **10 seeds** for classification and surrogate,
 5 for the multimodal run. Nothing was tuned after seeing results. Significance: paired Wilcoxon on the
-per-seed area under the learning curve (ALC) versus `random`; **no multiple-comparison correction**, so
-isolated p≈0.03 values should be treated as noise.
+per-seed area under the learning curve (ALC) versus `random`, with 95% bootstrap CIs and **Holm-adjusted p-values
+over each table's cells** (`scripts/resummarize.py` regenerates all `results/*_summary.md` from the CSVs). Raw p≈0.03 values
+usually do not survive the correction; the text below quotes Holm values where it makes a claim. The multimodal table is
+5 seeds with no tests.
 
 ## Results
 
@@ -81,9 +86,10 @@ Full tables, including ECE and ALC differences: `results/*_summary.md`.
 | hybrid | 0.928±0.050 | 0.514±0.144 | 0.252±0.011 |
 | cost_uncertainty | 0.917±0.039 | 0.490±0.110 | 0.248±0.004 |
 
-ALC difference vs random: in-distribution, only `hybrid` is nominally better (+0.020, p=0.03; uncorrected).
-On **scale shift, uncertainty sampling is significantly *worse* than random** (−0.040, p=0.01;
-cost-aware −0.064, p<0.01). On instrument shift everything is at chance (0.25 for 4 classes).
+ALC difference vs random, after Holm correction over each table's 9 cells (bootstrap CIs and adjusted p-values are in
+`results/*_summary.md`): **nothing is better than random in-distribution** (`hybrid` +0.020, raw p=0.03, Holm p=0.27).
+On scale shift uncertainty sampling looks worse than random (−0.040, raw p=0.01) but **does not survive correction**
+(Holm p=0.15); the cost-aware variant does (−0.064, Holm p=0.02). On instrument shift everything is at chance (0.25 for 4 classes).
 
 ### 2. Calibration under shift (baseline, `random` strategy)
 
@@ -95,7 +101,7 @@ cost-aware −0.064, p<0.01). On instrument shift everything is at chance (0.25 
 
 The classifier is well calibrated in-distribution and **badly overconfident under shift** (95% confident,
 25% correct on the shifted instrument). Entropy-based acquisition inherits this: it also raised ECE on scale
-shift (+0.070, p<0.01). Calibrated or shift-aware uncertainty is a real open problem here, not a solved one.
+shift (+0.070 ECE, Holm p=0.02). Calibrated or shift-aware uncertainty is a real open problem here, not a solved one.
 
 ### 3. Instrument-robustness variant (per-image normalisation + strong augmentation) — 10 seeds
 
@@ -137,7 +143,7 @@ No evidence that explicit cost-awareness helps here; the result depends entirely
 | hybrid | 21.2±1.5 | 0.711±0.041 | 0.874 | 0.657 |
 | cost_uncertainty | 25.2±3.9 | 0.582±0.132 | 0.825 | 0.785 |
 
-No active strategy is significantly better than random for the surrogate (uncertainty, diversity and hybrid: p>0.2 in distribution; `cost_uncertainty` is worse, p=0.05, and clearly worse under scale shift). Intervals are
+No active strategy is significantly better than random for the surrogate (uncertainty, diversity and hybrid: raw p>0.2 in distribution; `cost_uncertainty` is clearly worse under scale shift, Holm p=0.02). Intervals are
 close to nominal in-distribution (~0.88 vs 0.90) and **under-cover under shift** (~0.66–0.71). R² under scale shift is ~0.2
 and about 0 under instrument shift: the representation does not transfer, so the surrogate does not either.
 
@@ -174,7 +180,7 @@ martensite, pearlite+widmanstatten). Images are cropped (SEM info banner removed
 - Pool: SE-detector, low-magnification images of pool specimens (magnification ≤ median 1473x). Test specimens are disjoint.
 - Real shifts, using held-out specimens only: `mag_shift` = SE detector at high magnification; `detector_shift` = BSE detector.
 - 10 seeds (different specimen splits); about 190 pool images, 128/107/34 test images (in-dist / mag-shift / detector-shift) on average.
-- 14 initial labels, +10 per round, 8 rounds (94 labels). Same encoder, heads and statistics as above (Wilcoxon on ALC vs random, uncorrected).
+- 14 initial labels, +10 per round, 8 rounds (94 labels). Same encoder, heads and statistics as above (Wilcoxon on ALC vs random, Holm-corrected within each table).
 - Full tables incl. balanced accuracy and ECE: `results/results_real_*_summary.md`.
 
 **Results, accuracy at 94 labels (mean±std over 10 seeds).** Majority-class accuracy is 0.348 / 0.170 / 0.300 on the three sets.
@@ -194,15 +200,16 @@ martensite, pearlite+widmanstatten). Images are cropped (SEM info banner removed
 
 What this does and does not say:
 - **The task is hard for this pipeline:** ~0.55 accuracy in-distribution against a 0.35 majority baseline; balanced accuracy is only ~0.3 (7 classes, strong imbalance).
-- **No active strategy beats random anywhere.** Every in-distribution ALC difference vs random is within ±0.02 with p≥0.16. The one significant result is negative: `diversity` is worse than random under magnification shift with a random-init encoder (−0.073, p<0.01). With dozens of uncorrected comparisons per encoder, treat isolated p-values lightly.
+- **No active strategy beats random anywhere.** Every in-distribution ALC difference vs random is within ±0.02 with p≥0.16. The one result that survives Holm correction is negative: `diversity` is worse than random under magnification shift with a random-init encoder (−0.073, Holm p=0.04). Raw p-values elsewhere are mostly not significant after correction.
 - **Contrastive pretraining is not better than a random-init encoder** (in-dist 0.553 vs 0.563 for `random`).
+- **Training-free handcrafted features are as good as the CNN, and image size matters more than the encoder.** Intensity/gradient/orientation/LBP-style histograms (`models/classical.py`, contrast-invariant, no learning) give in-dist accuracy 0.555±0.059 at 64 px (same as the CNN) and **0.608±0.072 (random) / 0.642±0.061 (hybrid) at 128 px**. The strategies are still indistinguishable from random (all Holm p=1.00 at 128 px). Detector shift stays near the majority rate (0.27-0.30 at 128 px). So the learned encoder is not earning its keep at this scale, and for the handcrafted features higher resolution helped by ~5 points (I did not try the CNN at 128 px).
 - **Detector shift (SE→BSE):** accuracy is about the majority-class rate or below (0.30), and with per-image normalisation it drops to 0.18-0.23, *below* the majority baseline. The normalisation/strong-augmentation trick that helped the synthetic instrument shift does **not** transfer to this real detector shift. The BSE test sets are small (~34 images from a few specimens), so these numbers are noisy.
 - Conclusion: the synthetic benchmark is not predictive of real behaviour (active-learning "gains" and the robustness trick both failed to transfer). A real study needs stronger representations (pretrained backbones, more pretraining data) before active learning can be meaningfully assessed.
 
 ## Limitations
 
 - **Mostly synthetic.** Sections 1-7 use synthetic classes, property and cost that are invented, easy to separate, and share the generator with the test sets; the real-data section shows they do not predict real behaviour. The real-data run covers one dataset, one task (microconstituent classification, no EBSD, no properties) and ~190 pool images.
-- **Small scale.** 600-image pool, 64×64 images, 3-block CNN, 15 epochs, 5–10 seeds. Differences of a few points are within noise; p-values are uncorrected.
+- **Small scale.** 600-image pool, 64×64 images, 3-block CNN, 15 epochs, 5–10 seeds. Differences of a few points are within noise; claims rely on Holm-corrected paired tests over 10 seeds (5 for the multimodal run, untested).
 - **Scale shift is partly label-ambiguous by design** (a magnified fine texture looks coarse), so some loss is unavoidable without magnification metadata.
 - **Mixed-up comparisons.** The no-pretraining ablation differs from the baseline in input normalisation; I did not run the full 2×2.
 - **Cross-modal setup is toy:** EBSD is a deterministic function of the same latent grains; no flips/rotations in cross-modal training (orientation encoding); no real registration error.
