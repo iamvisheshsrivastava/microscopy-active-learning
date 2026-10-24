@@ -179,6 +179,22 @@ def test_classical_features_shape_and_contrast_invariance():
     assert np.array_equal(f, classical_embed(x))  # deterministic
 
 
+def test_verify_manifest(tmp_path):
+    import hashlib
+    import json
+    from maldl.data.uhcsdb import verify_manifest
+    (tmp_path / "micrographs").mkdir()
+    (tmp_path / "micrographs" / "a.png").write_bytes(b"abc")
+    (tmp_path / "micrographs" / "b.png").write_bytes(b"xyz")
+    good = hashlib.sha256(b"abc").hexdigest()
+    man = {"files": {"micrographs/a.png": {"sha256": good}, "micrographs/b.png": {"sha256": "0" * 64},
+                     "micrographs/c.png": {"sha256": good}, "LICENSE": {"sha256": "ignored"}}}
+    (tmp_path / "manifest.json").write_text(json.dumps(man))
+    n, problems = verify_manifest(tmp_path)
+    assert n == 3 and sorted(problems) == ["missing: micrographs/c.png",
+                                           "sha256 mismatch: micrographs/b.png"]
+
+
 def test_stats_summary():
     rows = [{"strategy": s, "seed": sd, "round": r, "m": 0.5 + 0.1 * r + (0.05 if s == "b" else 0)
              + 0.01 * sd} for s in "ab" for sd in range(6) for r in range(3)]

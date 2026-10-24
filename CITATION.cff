@@ -1,0 +1,32 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below. If you use the UHCSDB data, also cite DeCost et al. 2017."
+title: "microscopy-active-learning"
+type: software
+authors:
+  - family-names: Srivastava
+    given-names: Vishesh
+repository-code: "https://github.com/iamvisheshsrivastava/microscopy-active-learning"
+license: MIT
+abstract: "Prototype harness for self-supervised embeddings, active learning, property surrogates and SEM/EBSD cross-modal pretraining on microscopy images, evaluated under scale and instrument shift. Not a research result."
+references:
+  - type: article
+    title: "UHCSDB: UltraHigh Carbon Steel Micrograph DataBase: tools for exploring large heterogeneous microstructure datasets"
+    authors:
+      - family-names: DeCost
+        given-names: Brian L.
+      - family-names: Hecht
+        given-names: Michael D.
+      - family-names: Francis
+        given-names: Toby
+      - family-names: Webler
+        given-names: Bryan A.
+      - family-names: Picard
+        given-names: Yoosuf N.
+      - family-names: Holm
+        given-names: Elizabeth A.
+    journal: "Integrating Materials and Manufacturing Innovation"
+    volume: 6
+    start: 197
+    end: 205
+    year: 2017
+    doi: "10.1007/s40192-017-0097-0"

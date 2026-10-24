@@ -28,14 +28,14 @@ meant to be re-run on real data (see Roadmap).
 | Active learning / experimental design under cost and uncertainty | 5 query strategies incl. an assumed-cost-aware one; learning curves vs labels and vs cost; paired significance tests |
 | Surrogates from representations to properties | GP on embeddings predicting a synthetic hardness; active learning for regression; interval coverage |
 | Uncertainty modelling | ECE and confidence for the classifier; 90% interval coverage for the GP |
-| Open-source research software | Seeded CLIs, 28 tests, CI, group-aware splits and a metadata-CSV loader for real data |
+| Open-source research software | Seeded CLIs, 29 tests, CI, `CITATION.cff`, group-aware splits and a metadata-CSV loader for real data |
 
 ## Quick start
 
 ```bash
 pip install torch                      # CPU is fine; --device cuda works if available
 pip install -e ".[dev]"
-pytest -q                              # 28 tests, ~30 s
+pytest -q                              # 29 tests, ~40 s
 
 python scripts/run_experiment.py --tag _baseline                             # ~16 min, 10 seeds
 python scripts/run_experiment.py --norm-input --strong-aug --tag _robust     # instrument-robustness variant
@@ -47,6 +47,7 @@ python scripts/run_multimodal.py                                             # S
 python scripts/run_real.py --epochs 60 --tag _real_contrastive
 python scripts/run_real.py --encoder classical --size 128 --tag _real_classical128   # handcrafted baseline
 
+python scripts/get_uhcsdb.py           # clone the UHCSDB mirror (~580 MB) and verify SHA-256 hashes
 python scripts/resummarize.py          # regenerate summaries with Holm p-values and bootstrap CIs
 ```
 
@@ -202,7 +203,7 @@ What this does and does not say:
 - **The task is hard for this pipeline:** ~0.55 accuracy in-distribution against a 0.35 majority baseline; balanced accuracy is only ~0.3 (7 classes, strong imbalance).
 - **No active strategy beats random anywhere.** Every in-distribution ALC difference vs random is within ±0.02 with p≥0.16. The one result that survives Holm correction is negative: `diversity` is worse than random under magnification shift with a random-init encoder (−0.073, Holm p=0.04). Raw p-values elsewhere are mostly not significant after correction.
 - **Contrastive pretraining is not better than a random-init encoder** (in-dist 0.553 vs 0.563 for `random`).
-- **Training-free handcrafted features are as good as the CNN, and image size matters more than the encoder.** Intensity/gradient/orientation/LBP-style histograms (`models/classical.py`, contrast-invariant, no learning) give in-dist accuracy 0.555±0.059 at 64 px (same as the CNN) and **0.608±0.072 (random) / 0.642±0.061 (hybrid) at 128 px**. The strategies are still indistinguishable from random (all Holm p=1.00 at 128 px). Detector shift stays near the majority rate (0.27-0.30 at 128 px). So the learned encoder is not earning its keep at this scale, and for the handcrafted features higher resolution helped by ~5 points (I did not try the CNN at 128 px).
+- **Training-free handcrafted features are as good as the CNN, and image size matters more than the encoder.** Intensity/gradient/orientation/LBP-style histograms (`models/classical.py`, contrast-invariant, no learning) give in-dist accuracy 0.555±0.059 at 64 px (same as the CNN) and **0.608±0.072 (random) / 0.642±0.061 (hybrid) at 128 px**. The strategies are still indistinguishable from random (all Holm p=1.00 at 128 px). Detector shift stays near the majority rate (0.27-0.30 at 128 px). So the learned encoder is not earning its keep at this scale, and for the handcrafted features higher resolution helped by ~5 points and the CNN does not change that picture at 128 px either (in-dist `random`: random-init CNN 0.582±0.063 over 10 seeds; contrastive CNN, 30 epochs, 0.590±0.078 over only 5 seeds; handcrafted 0.608±0.072). All three encoders are within one standard deviation of each other, and no strategy is distinguishable from random (all Holm p≥0.56). Pretraining still has not shown a benefit; a stronger test needs far more unlabeled images or a pretrained backbone.
 - **Detector shift (SE→BSE):** accuracy is about the majority-class rate or below (0.30), and with per-image normalisation it drops to 0.18-0.23, *below* the majority baseline. The normalisation/strong-augmentation trick that helped the synthetic instrument shift does **not** transfer to this real detector shift. The BSE test sets are small (~34 images from a few specimens), so these numbers are noisy.
 - Conclusion: the synthetic benchmark is not predictive of real behaviour (active-learning "gains" and the robustness trick both failed to transfer). A real study needs stronger representations (pretrained backbones, more pretraining data) before active learning can be meaningfully assessed.
 

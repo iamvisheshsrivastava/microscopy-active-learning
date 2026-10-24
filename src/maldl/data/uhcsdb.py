@@ -17,6 +17,28 @@ from PIL import Image
 BANNER_ROWS = 38  # 522-px-high UHCSDB images carry a 38-px info bar at the bottom
 
 
+def verify_manifest(root):
+    """Check every `micrographs/*` file against `manifest.json` SHA-256s.
+
+    Returns (n_checked, problems) where problems lists missing or mismatching paths."""
+    import hashlib
+    import json
+    root = Path(root)
+    files = json.load(open(root / "manifest.json", encoding="utf-8")).get("files", {})
+    problems, n = [], 0
+    for rel, digest in files.items():
+        if not rel.startswith("micrographs/"):
+            continue
+        n += 1
+        p = root / rel
+        if not p.exists():
+            problems.append(f"missing: {rel}")
+        elif hashlib.sha256(p.read_bytes()).hexdigest() != (
+                digest if isinstance(digest, str) else digest.get("sha256")):
+            problems.append(f"sha256 mismatch: {rel}")
+    return n, problems
+
+
 def _parse_mag(s):
     m = re.search(r"[\d.]+", s or "")
     return float(m.group()) if m else float("nan")
