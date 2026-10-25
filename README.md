@@ -220,7 +220,7 @@ What this does and does not say:
 
 ## Roadmap (real data first)
 
-Tracked as [issues #1-#9](https://github.com/iamvisheshsrivastava/microscopy-active-learning/issues).
+Tracked as [issues](https://github.com/iamvisheshsrivastava/microscopy-active-learning/issues).
 
 1. ~~UHCSDB baseline with grouped splits~~ (done above). Next: the Aachen–Heerlen steel SEM set as a second source, larger images, leave-one-source-out evaluation.
 2. Real SEM+EBSD pairs (e.g. the Georgia Tech dual-phase steel set, if its sample correspondence holds, or IAS-9 partner data) in place of the synthetic pair generator.
