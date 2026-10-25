@@ -47,7 +47,7 @@ def _blur(img, sigma):
 def _structure(cls, rng, size, scale):
     """Clean microstructure: grayscale image, grain labels, orientation, property."""
     n_base = {0: 70, 1: 14, 2: 16, 3: 16}[cls]
-    n = max(2, int(round(n_base / scale**2 * rng.uniform(0.8, 1.2))))
+    n = max(2, round(n_base / scale**2 * rng.uniform(0.8, 1.2)))
     seeds = rng.uniform(0, size, (n, 2))
     yy, xx = np.mgrid[0:size, 0:size]
     pts = np.stack([yy, xx], -1).reshape(-1, 1, 2)
@@ -78,8 +78,15 @@ def _structure(cls, rng, size, scale):
     if cls == 3:
         prop += 600.0 * prec.mean()
     prop += rng.normal(0, 5.0)
-    return dict(img=img, lab=lab, edge=edge, prec=prec, theta=theta, n=n,
-                prop=float(prop))
+    return {
+    "img": img,
+    "lab": lab,
+    "edge": edge,
+    "prec": prec,
+    "theta": theta,
+    "n": n,
+    "prop": float(prop),
+    }
 
 
 def _sem(s, rng, source):

@@ -15,8 +15,13 @@ from maldl.eval.stats import markdown_summary, paired_test
 from maldl.models.encoder import Encoder
 from maldl.models.surrogate import GPSurrogate
 from maldl.training.contrastive import embed, nt_xent, pretrain
-from maldl.training.crossmodal import (clip_loss, embed_projected, pretrain_crossmodal,
-                                           retrieval_class_match, retrieval_recall)
+from maldl.training.crossmodal import (
+    clip_loss,
+    embed_projected,
+    pretrain_crossmodal,
+    retrieval_class_match,
+    retrieval_recall,
+)
 
 
 def test_dataset_shapes_and_balance():
@@ -144,7 +149,7 @@ def test_load_table(tmp_path):
         w = csv.DictWriter(f, fieldnames=["path", "label", "group"])
         w.writeheader()
         w.writerows(rows)
-    x, y, classes, meta = load_table(tmp_path / "meta.csv", tmp_path, size=16)
+    x, _y, classes, meta = load_table(tmp_path / "meta.csv", tmp_path, size=16)
     assert x.shape == (4, 1, 16, 16) and classes == ["a", "b"] and meta["group"][0] == "s0"
 
 
@@ -182,6 +187,7 @@ def test_classical_features_shape_and_contrast_invariance():
 def test_verify_manifest(tmp_path):
     import hashlib
     import json
+
     from maldl.data.uhcsdb import verify_manifest
     (tmp_path / "micrographs").mkdir()
     (tmp_path / "micrographs" / "a.png").write_bytes(b"abc")

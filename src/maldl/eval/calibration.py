@@ -1,3 +1,5 @@
+from itertools import pairwise
+
 import numpy as np
 
 
@@ -7,7 +9,7 @@ def ece(probs, y, bins=10):
     correct = (probs.argmax(1) == y).astype(float)
     edges = np.linspace(0, 1, bins + 1)
     total = 0.0
-    for lo, hi in zip(edges[:-1], edges[1:]):
+    for lo, hi in pairwise(edges):
         m = (conf > lo) & (conf <= hi)
         if m.any():
             total += m.mean() * abs(correct[m].mean() - conf[m].mean())

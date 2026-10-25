@@ -1,8 +1,8 @@
 """SimCLR-style self-supervised training with multi-scale random-resized crops."""
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 
 def random_resized_crop(x, rng, out=64, scale=(0.15, 1.0)):

@@ -11,7 +11,7 @@ license = { text = "MIT" }
 dependencies = ["numpy", "scipy", "scikit-learn", "pillow", "matplotlib", "torch"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff", "mypy", "scipy-stubs", "scikit-learn-stubs"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
