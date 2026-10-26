@@ -47,10 +47,16 @@ def markdown_summary(rows, strategies, metrics, baseline="random", fmt="{:.3f}")
            for s in others for m in metrics}
     keys = list(res)
     adj = dict(zip(keys, holm([res[k][1] for k in keys])))
-    out += ["", f"ALC difference vs `{baseline}`: mean diff [95% bootstrap CI over seeds], "
-                f"Wilcoxon p, Holm-adjusted p over all {len(keys)} cells of this table "
-                f"(p cannot go below ~{2 / 2 ** n_seeds:.3f} with {n_seeds} seeds).\n",
-            "| strategy | " + " | ".join(metrics) + " |", "|---|" + "---|" * len(metrics)]
+    out += [
+        "",
+        (
+            f"ALC difference vs `{baseline}`: mean diff [95% bootstrap CI over seeds], "
+            f"Wilcoxon p, Holm-adjusted p over all {len(keys)} cells of this table "
+            f"(p cannot go below ~{2 / 2 ** n_seeds:.3f} with {n_seeds} seeds).\n"
+        ),
+        "| strategy | " + " | ".join(metrics) + " |",
+        "|---|" + "---|" * len(metrics),
+    ]
     for s in others:
         cells = []
         for m in metrics:

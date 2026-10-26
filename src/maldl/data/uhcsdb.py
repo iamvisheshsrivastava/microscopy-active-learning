@@ -18,13 +18,17 @@ BANNER_ROWS = 38  # 522-px-high UHCSDB images carry a 38-px info bar at the bott
 
 
 def verify_manifest(root):
-    """Check every `micrographs/*` file against `manifest.json` SHA-256s.
+    """Check every `micrographs/*` file against `manifest.json` SHA-256.
 
-    Returns (n_checked, problems) where problems lists missing or mismatching paths."""
+    Returns (n_checked, problems) where problems lists missing or mismatching paths.
+    """
     import hashlib
     import json
+
     root = Path(root)
-    files = json.load(open(root / "manifest.json", encoding="utf-8")).get("files", {})
+    with open(root / "manifest.json", encoding="utf-8") as f:
+        files = json.load(f).get("files", {})
+
     problems, n = [], 0
     for rel, digest in files.items():
         if not rel.startswith("micrographs/"):

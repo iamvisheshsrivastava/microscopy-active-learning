@@ -7,9 +7,9 @@ def build_eval_sets(encoder, seed, n=300, size=64, shift_scale=1.5):
     """Test sets use seeds disjoint from train.
     Returns {name: (emb, y_class, y_property)}."""
     specs = {
-        "in_dist": dict(scale=1.0, source=SOURCE_A),
-        "scale_shift": dict(scale=shift_scale, source=SOURCE_A),
-        "source_shift": dict(scale=1.0, source=SOURCE_B),
+        "in_dist": {"scale": 1.0, "source": SOURCE_A},
+        "scale_shift": {"scale": shift_scale, "source": SOURCE_A},
+        "source_shift": {"scale": 1.0, "source": SOURCE_B},
     }
     out = {}
     for i, (name, kw) in enumerate(specs.items()):

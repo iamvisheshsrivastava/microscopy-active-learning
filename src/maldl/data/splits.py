@@ -11,7 +11,7 @@ def group_split(groups, test_frac=0.3, seed=0):
         raise ValueError("need at least 2 groups to split")
     rng = np.random.default_rng(seed)
     rng.shuffle(uniq)
-    n_test = min(len(uniq) - 1, max(1, int(round(test_frac * len(uniq)))))
+    n_test = min(len(uniq) - 1, max(1, round(test_frac * len(uniq))))
     test_groups = set(uniq[:n_test].tolist())
     is_test = np.array([g in test_groups for g in groups.tolist()])
     return np.flatnonzero(~is_test), np.flatnonzero(is_test)

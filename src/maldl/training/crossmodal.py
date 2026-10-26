@@ -6,8 +6,8 @@ the EBSD channels encode orientation angles and would no longer match.
 """
 import numpy as np
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from .contrastive import intensity_jitter, random_resized_crop
 

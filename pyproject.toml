@@ -11,7 +11,7 @@ license = { text = "MIT" }
 dependencies = ["numpy", "scipy", "scikit-learn", "pillow", "matplotlib", "torch"]
 
 [project.optional-dependencies]
-dev = ["pytest"]
+dev = ["pytest", "ruff", "mypy", "scipy-stubs"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -19,3 +19,6 @@ where = ["src"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+
+[tool.mypy]
+ignore_missing_imports = true

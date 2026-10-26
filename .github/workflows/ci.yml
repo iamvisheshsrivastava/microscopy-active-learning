@@ -10,4 +10,6 @@ jobs:
           python-version: "3.11"
       - run: pip install torch --index-url https://download.pytorch.org/whl/cpu
       - run: pip install -e ".[dev]"
+      - run: python -m ruff check src tests
+      - run: python -m mypy src/maldl
       - run: pytest -q
