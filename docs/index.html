@@ -30,9 +30,9 @@
   <p class="muted">Self-supervised embeddings, active learning, property surrogates and SEM/EBSD cross-modal pretraining,
   evaluated under scale and instrument shift. <a href="https://github.com/iamvisheshsrivastava/microscopy-active-learning">Code, tests and full README on GitHub</a>.</p>
 
-  <div class="note"><strong>Read this first.</strong> This is a small prototype, not research. The data is mostly synthetic, one section uses
-  961 real steel micrographs (UHCSDB), and <strong>most results are negative</strong>: active learning did not beat random sampling
-  on real data, and contrastive pretraining showed no benefit at this scale. These pages exist to show the method and the honest numbers.</div>
+  <div class="note"><strong>Summary.</strong> Experiments run on a controllable synthetic generator and on 961 real steel micrographs (UHCSDB)
+  with specimen-grouped splits and Holm-corrected paired tests over 10 seeds. On real data, active-learning strategies were not
+  distinguishable from random sampling and contrastive pretraining showed no benefit at this scale; the numbers below are reported as measured.</div>
 
   <h2>What is in the repo</h2>
   <ul>

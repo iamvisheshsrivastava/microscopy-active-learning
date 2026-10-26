@@ -17,4 +17,4 @@ Every file here comes from a seeded run; `*_summary.md` are regenerated from the
 | `results_real_contrastive128.*` | UHCSDB, 128 px, SimCLR 30 epochs | **5** | `run_real.py --size 128 --seeds 5 --epochs 30` |
 
 Real-data runs use specimen-grouped splits and exclude images without a specimen id; see the main README.
-Older files from the first prototype (5 seeds, pre-refactor code) were removed and are not comparable.
+Files from an earlier iteration (5 seeds, pre-refactor code) were removed and are not comparable.

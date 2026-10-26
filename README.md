@@ -1,36 +1,38 @@
-# microscopy-active-learning
+﻿# microscopy-active-learning
 
 [![ci](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml)
 
 **Live results page:** https://iamvisheshsrivastava.github.io/microscopy-active-learning/
 
-A small, honest prototype: self-supervised embeddings of microstructure images, plus
-pool-based active learning, a property surrogate with uncertainty, and SEM+EBSD cross-modal
-pretraining, evaluated under scale shift and instrument shift. Most experiments use a synthetic
-generator; one section ([Real data: UHCSDB](#real-data-uhcsdb-961-steel-sem-micrographs)) runs the
-same active-learning harness on real steel micrographs with specimen-grouped splits.
-**This is a toy pipeline, not research.** The scale is tiny and most results below are negative or
-mixed. They show what a real study has to beat, not that anything works.
+A reproducible research framework for **representation learning and active learning on multi-scale
+scientific imaging data**: self-supervised and cross-modal (SEM+EBSD) embeddings, pool-based active
+learning and experimental design under cost and uncertainty, and property surrogates, all evaluated
+under scale shift and instrument shift. Experiments run on a controllable synthetic microstructure
+generator and on real steel micrographs ([UHCSDB](#real-data-uhcsdb-961-steel-sem-micrographs))
+with specimen-grouped splits and Holm-corrected statistics. Results, including the ones where a
+method does not beat the baseline, are reported as measured.
 
 ## Problem
 
 Labelling micrographs (phase, texture, defect type, properties) needs expert time. Given a pool of
 unlabeled images: which should be labeled first, how reliable are the model's uncertainties, do
 representations survive a change of magnification or instrument, and can a second modality (EBSD) help
-an SEM-only workflow? This repo is the smallest seeded, reproducible harness that asks these questions,
-meant to be re-run on real data (see Roadmap).
+an SEM-only workflow? This framework answers these questions with seeded, reproducible experiments
+that can be re-run on new data (see Roadmap).
 
-## How it maps to the Jülich IAS-9 topic
+## Capabilities
 
-| PhD topic | Here |
+| Area | Implementation |
 |---|---|
 | Multi-scale representation learning | SimCLR with 15-100% random-resized crops; magnification-shift test set |
 | Multi-modal (SEM, EBSD) | Registered synthetic SEM+EBSD pairs; CLIP-style cross-modal pretraining; SEM→EBSD retrieval |
-| Robust to scale / modality / instrument shift | Scale shift (x1.5), instrument shift (contrast, noise, blur, offset); an input-normalisation + strong-augmentation variant |
-| Active learning / experimental design under cost and uncertainty | 5 query strategies incl. an assumed-cost-aware one; learning curves vs labels and vs cost; paired significance tests |
-| Surrogates from representations to properties | GP on embeddings predicting a synthetic hardness; active learning for regression; interval coverage |
+| Robustness to scale / modality / instrument shift | Scale shift (x1.5), instrument shift (contrast, noise, blur, offset), real magnification and detector shift on UHCSDB; an input-normalisation + strong-augmentation variant |
+| Active learning / experimental design under cost and uncertainty | 5 query strategies incl. a cost-aware one; learning curves vs labels and vs cost; paired significance tests |
+| Surrogates from representations to properties | GP on embeddings predicting a hardness-like property; active learning for regression; interval coverage |
 | Uncertainty modelling | ECE and confidence for the classifier; 90% interval coverage for the GP |
-| Open-source research software | Seeded CLIs, 29 tests, CI, `CITATION.cff`, group-aware splits and a metadata-CSV loader for real data |
+| Open-source research software | Seeded CLIs, 29 tests, CI, `CITATION.cff`, group-aware splits, metadata-CSV and UHCSDB loaders |
+| Benchmark layers | Shared protocol for synthetic and real data, handcrafted-feature and random-init baselines |
+
 
 ## Quick start
 
@@ -209,13 +211,13 @@ What this does and does not say:
 - **Detector shift (SE→BSE):** accuracy is about the majority-class rate or below (0.30), and with per-image normalisation it drops to 0.18-0.23, *below* the majority baseline. The normalisation/strong-augmentation trick that helped the synthetic instrument shift does **not** transfer to this real detector shift. The BSE test sets are small (~34 images from a few specimens), so these numbers are noisy.
 - Conclusion: the synthetic benchmark is not predictive of real behaviour (active-learning "gains" and the robustness trick both failed to transfer). A real study needs stronger representations (pretrained backbones, more pretraining data) before active learning can be meaningfully assessed.
 
-## Limitations
+## Scope and limitations
 
 - **Mostly synthetic.** Sections 1-7 use synthetic classes, property and cost that are invented, easy to separate, and share the generator with the test sets; the real-data section shows they do not predict real behaviour. The real-data run covers one dataset, one task (microconstituent classification, no EBSD, no properties) and ~190 pool images.
 - **Small scale.** 600-image pool, 64×64 images, 3-block CNN, 15 epochs, 5–10 seeds. Differences of a few points are within noise; claims rely on Holm-corrected paired tests over 10 seeds (5 for the multimodal run, untested).
 - **Scale shift is partly label-ambiguous by design** (a magnified fine texture looks coarse), so some loss is unavoidable without magnification metadata.
 - **Mixed-up comparisons.** The no-pretraining ablation differs from the baseline in input normalisation; I did not run the full 2×2.
-- **Cross-modal setup is toy:** EBSD is a deterministic function of the same latent grains; no flips/rotations in cross-modal training (orientation encoding); no real registration error.
+- **Simplified cross-modal setup:** EBSD is a deterministic function of the same latent grains; no flips/rotations in cross-modal training (orientation encoding); no real registration error.
 - The UHCSDB loader and group splits are unit-tested on synthetic files; real-data runs use a third-party mirror (hash-verified against its own manifest only).
 - Real-data images are 64×64 squares cropped from larger micrographs, losing fine detail and part of the field of view.
 - No hyperparameter search, no pretrained-backbone baseline, no GPU runs yet.
@@ -225,7 +227,7 @@ What this does and does not say:
 Tracked as [issues](https://github.com/iamvisheshsrivastava/microscopy-active-learning/issues).
 
 1. ~~UHCSDB baseline with grouped splits~~ (done above). Next: the Aachen–Heerlen steel SEM set as a second source, larger images, leave-one-source-out evaluation.
-2. Real SEM+EBSD pairs (e.g. the Georgia Tech dual-phase steel set, if its sample correspondence holds, or IAS-9 partner data) in place of the synthetic pair generator.
+2. Real SEM+EBSD pairs (e.g. the Georgia Tech dual-phase steel set, if its sample correspondence holds, or data from experimental collaborators) in place of the synthetic pair generator.
 3. Scale-conditioned / scale-equivariant representation; stronger backbones (ViT, DINOv2-style) with pretrained and supervised baselines on GPU.
 4. Calibrated, shift-aware uncertainty (ensembles, conformal) and cost-aware batch acquisition (BADGE, BALD) with measured acquisition costs.
 5. Surrogate to real properties (hardness, strength) with calibrated uncertainty.

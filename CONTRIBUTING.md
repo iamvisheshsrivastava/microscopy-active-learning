@@ -1,6 +1,6 @@
 # Contributing
 
-This is a small research-prototype repo. Issues and PRs are welcome, especially the ones labelled `good first issue`.
+Issues and PRs are welcome, especially the ones labelled `good first issue`.
 
 ## Ground rules
 

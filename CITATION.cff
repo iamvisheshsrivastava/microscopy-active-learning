@@ -7,7 +7,7 @@ authors:
     given-names: Vishesh
 repository-code: "https://github.com/iamvisheshsrivastava/microscopy-active-learning"
 license: MIT
-abstract: "Prototype harness for self-supervised embeddings, active learning, property surrogates and SEM/EBSD cross-modal pretraining on microscopy images, evaluated under scale and instrument shift. Not a research result."
+abstract: "Reproducible framework for self-supervised and cross-modal representation learning, active learning under cost and uncertainty, and property surrogates on microscopy images (SEM/EBSD), evaluated under scale and instrument shift."
 references:
   - type: article
     title: "UHCSDB: UltraHigh Carbon Steel Micrograph DataBase: tools for exploring large heterogeneous microstructure datasets"

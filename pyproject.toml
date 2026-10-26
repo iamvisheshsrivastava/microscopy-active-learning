@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "maldl"
 version = "0.1.0"
-description = "Small prototype: self-supervised embeddings + active learning on synthetic microstructures"
+description = "Representation learning and active learning for multi-scale scientific imaging (SEM/EBSD), with scale and instrument shift evaluation"
 requires-python = ">=3.10"
 license = { text = "MIT" }
 dependencies = ["numpy", "scipy", "scikit-learn", "pillow", "matplotlib", "torch"]
