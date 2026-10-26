@@ -5,3 +5,7 @@ __pycache__/
 .venv/
 # raw datasets live in the top-level data/ folder only (src/maldl/data is source code)
 /data/
+
+# job downloads from Kaggle must never be committed
+results/kaggle_*/
+*.tif

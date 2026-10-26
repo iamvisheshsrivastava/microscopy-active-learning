@@ -75,10 +75,16 @@ def main(argv=None):
             if "COMPLETE" in st or "ERROR" in st or "CANCEL" in st:
                 break
             time.sleep(30)
-        out = Path(a.out) / f"kaggle_{a.job}"
+        # download into a temp dir and keep only small result files (never raw data or clones)
+        dl = d / "download"
+        dl.mkdir()
+        print(kaggle("kernels", "output", f"{user}/{slug}", "-p", str(dl)))
+        out = Path(a.out)
         out.mkdir(parents=True, exist_ok=True)
-        print(kaggle("kernels", "output", f"{user}/{slug}", "-p", str(out)))
-    print("results in", out)
+        for f in dl.rglob("*"):
+            if f.is_file() and f.suffix in {".csv", ".png", ".md", ".log"} and f.stat().st_size < 5e6:
+                (out / f.name).write_bytes(f.read_bytes())
+    print("results copied to", out)
     return 0 if "COMPLETE" in st else 1
 
 
