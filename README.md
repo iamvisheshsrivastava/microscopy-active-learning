@@ -202,6 +202,22 @@ martensite, pearlite+widmanstatten). Images are cropped (SEM info banner removed
 | random-init | hybrid | 0.571±0.048 | 0.331±0.078 | 0.358±0.205 |
 | contrastive + norm + strong aug | random | 0.528±0.068 | 0.398±0.131 | 0.180±0.087 |
 | random-init + norm | random | 0.549±0.056 | 0.417±0.080 | 0.226±0.152 |
+| **DINOv2-small (frozen, 224 px)** | random | 0.722±0.068 | 0.569±0.131 | 0.666±0.178 |
+| DINOv2-small | uncertainty | 0.718±0.058 | 0.575±0.073 | 0.664±0.169 |
+| DINOv2-small | diversity | 0.732±0.061 | 0.601±0.097 | 0.664±0.179 |
+| DINOv2-small | hybrid | 0.736±0.064 | 0.577±0.085 | 0.644±0.174 |
+| **DINOv2-base (frozen, 224 px)** | random | 0.770±0.050 | 0.602±0.158 | 0.708±0.122 |
+| DINOv2-base | uncertainty | 0.755±0.064 | 0.621±0.119 | 0.697±0.108 |
+| DINOv2-base | diversity | 0.774±0.045 | 0.603±0.134 | 0.703±0.120 |
+| DINOv2-base | hybrid | 0.772±0.059 | 0.641±0.147 | 0.737±0.140 |
+
+**Pretrained backbones (GPU, Kaggle T4).** `python scripts/kaggle_submit.py --job pretrained` runs a private Kaggle GPU job that
+clones this repo, downloads UHCSDB (hash-verified) and the DINOv2 weights from Hugging Face at run time, and fetches the results back. Same
+specimen-grouped splits, seeds, heads and statistics as every row above, so rows are directly comparable. The frozen pretrained features
+are the largest effect in this study: relative to the best from-scratch encoder, in-distribution accuracy rises from ~0.55-0.61 to 0.72 (small) / 0.77 (base),
+magnification-shift from ~0.43 to 0.57-0.60, and **detector shift from ~0.30-0.37 (majority-class level) to 0.67-0.71**. Caveat: DINOv2 is pretrained on a very
+large external natural-image corpus, so this measures the value of external pretraining and not of anything learned in this repo; weights are not fine-tuned.
+Active learning still does not help: no strategy differs from random after Holm correction (smallest adjusted p 0.25, DINOv2-base `hybrid` under magnification shift, +0.053 ALC).
 
 What this does and does not say:
 - **The task is hard for this pipeline:** ~0.55 accuracy in-distribution against a 0.35 majority baseline; balanced accuracy is only ~0.3 (7 classes, strong imbalance).
@@ -209,7 +225,7 @@ What this does and does not say:
 - **Contrastive pretraining is not better than a random-init encoder** (in-dist 0.553 vs 0.563 for `random`).
 - **Training-free handcrafted features are as good as the CNN, and image size matters more than the encoder.** Intensity/gradient/orientation/LBP-style histograms (`models/classical.py`, contrast-invariant, no learning) give in-dist accuracy 0.555±0.059 at 64 px (same as the CNN) and **0.608±0.072 (random) / 0.642±0.061 (hybrid) at 128 px**. The strategies are still indistinguishable from random (all Holm p=1.00 at 128 px). Detector shift stays near the majority rate (0.27-0.30 at 128 px). So the learned encoder is not earning its keep at this scale, and for the handcrafted features higher resolution helped by ~5 points and the CNN does not change that picture at 128 px either (in-dist `random`: random-init CNN 0.582±0.063 over 10 seeds; contrastive CNN, 30 epochs, 0.590±0.078 over only 5 seeds; handcrafted 0.608±0.072). All three encoders are within one standard deviation of each other, and no strategy is distinguishable from random (all Holm p≥0.56). Pretraining still has not shown a benefit; a stronger test needs far more unlabeled images or a pretrained backbone.
 - **Detector shift (SE→BSE):** accuracy is about the majority-class rate or below (0.30), and with per-image normalisation it drops to 0.18-0.23, *below* the majority baseline. The normalisation/strong-augmentation trick that helped the synthetic instrument shift does **not** transfer to this real detector shift. The BSE test sets are small (~34 images from a few specimens), so these numbers are noisy.
-- Conclusion: the synthetic benchmark is not predictive of real behaviour (active-learning "gains" and the robustness trick both failed to transfer). A real study needs stronger representations (pretrained backbones, more pretraining data) before active learning can be meaningfully assessed.
+- Conclusion: the synthetic benchmark is not predictive of real behaviour (active-learning "gains" and the robustness trick both failed to transfer). Representation quality dominates: a frozen pretrained backbone improves every shift setting substantially (see above), while the choice of query strategy does not matter at this pool size and label budget.
 
 ## Scope and limitations
 
@@ -220,7 +236,7 @@ What this does and does not say:
 - **Simplified cross-modal setup:** EBSD is a deterministic function of the same latent grains; no flips/rotations in cross-modal training (orientation encoding); no real registration error.
 - The UHCSDB loader and group splits are unit-tested on synthetic files; real-data runs use a third-party mirror (hash-verified against its own manifest only).
 - Real-data images are 64×64 squares cropped from larger micrographs, losing fine detail and part of the field of view.
-- No hyperparameter search, no pretrained-backbone baseline, no GPU runs yet.
+- No hyperparameter search. Pretrained backbones are evaluated frozen only (no fine-tuning); GPU runs cover only the frozen-backbone jobs so far.
 
 ## Roadmap (real data first)
 

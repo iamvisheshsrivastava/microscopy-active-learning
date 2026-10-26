@@ -36,8 +36,8 @@ def sh(cmd):
     print("$", cmd, flush=True)
     r = subprocess.run(cmd, shell=True)
     assert r.returncode == 0, cmd
-sh("git clone --depth 1 {repo} repo")
-os.chdir("repo")
+sh("git clone --depth 1 {repo} /tmp/repo")  # outside /kaggle/working so it is not returned as output
+os.chdir("/tmp/repo")
 sh("pip install -q --no-deps -e . && pip install -q transformers")
 sh("python scripts/get_uhcsdb.py")
 sh("nvidia-smi -L")

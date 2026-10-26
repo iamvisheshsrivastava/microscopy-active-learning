@@ -53,9 +53,13 @@
     <tr><td>contrastive CNN</td><td>hybrid</td><td>0.546±0.054</td><td>0.375±0.074</td><td>0.306±0.131</td></tr>
     <tr><td>random-init CNN</td><td>random</td><td>0.563±0.072</td><td>0.354±0.084</td><td>0.401±0.164</td></tr>
     <tr><td>handcrafted, 128 px</td><td>random</td><td>0.608±0.072</td><td>0.406±0.061</td><td>0.299±0.135</td></tr>
+    <tr><td><strong>DINOv2-small (frozen)</strong></td><td>random</td><td>0.722±0.068</td><td>0.569±0.131</td><td>0.666±0.178</td></tr>
+    <tr><td><strong>DINOv2-base (frozen)</strong></td><td>random</td><td>0.770±0.050</td><td>0.602±0.158</td><td>0.708±0.122</td></tr>
+    <tr><td>DINOv2-base (frozen)</td><td>hybrid</td><td>0.772±0.059</td><td>0.641±0.147</td><td>0.737±0.140</td></tr>
   </table>
-  <p>No active-learning strategy is distinguishable from random after Holm correction. The learned encoder is not better than a random-init
-  CNN or training-free texture features. Detector shift stays near the majority-class rate.</p>
+  <p>Representation quality dominates: frozen pretrained DINOv2 features (GPU runs) lift in-distribution accuracy from about 0.55-0.61 to 0.72-0.77 and
+  detector-shift accuracy from near the majority-class rate (0.30-0.37) to 0.67-0.71. Small CNNs trained from scratch on the unlabeled pool were not better
+  than random-init CNNs or handcrafted texture features, and no active-learning strategy is distinguishable from random after Holm correction.</p>
   <img src="results_real_contrastive.png" alt="Learning curves on UHCSDB for four query strategies under in-distribution, magnification shift and detector shift" loading="lazy">
 
   <h2>Synthetic benchmark: active learning under shift</h2>
