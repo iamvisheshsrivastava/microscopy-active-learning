@@ -195,6 +195,14 @@ def test_verify_manifest(tmp_path):
                                            "sha256 mismatch: micrographs/b.png"]
 
 
+def test_backbone_preprocessing_shape_and_range():
+    from maldl.models.backbone import preprocess_for_backbone
+    x, _ = make_dataset(4, seed=0, size=32)
+    t = preprocess_for_backbone(x, size=56)
+    assert t.shape == (4, 3, 56, 56) and torch.isfinite(t).all()
+    assert torch.allclose(t[:, 0] * 0.229 + 0.485, t[:, 1] * 0.224 + 0.456, atol=1e-5)  # same gray image
+
+
 def test_stats_summary():
     rows = [{"strategy": s, "seed": sd, "round": r, "m": 0.5 + 0.1 * r + (0.05 if s == "b" else 0)
              + 0.01 * sd} for s in "ab" for sd in range(6) for r in range(3)]
