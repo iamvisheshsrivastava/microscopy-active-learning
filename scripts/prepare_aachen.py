@@ -14,6 +14,8 @@ import io
 import json
 import re
 import sys
+import time
+import urllib.error
 import urllib.request
 import zipfile
 from collections import Counter
@@ -27,7 +29,9 @@ PT = re.compile(r"\((\d+),\s*(\d+)\)")
 
 
 def figshare_file(article):
-    with urllib.request.urlopen(f"https://api.figshare.com/v2/articles/{article}", timeout=60) as r:
+    req = urllib.request.Request(f"https://api.figshare.com/v2/articles/{article}",
+                                 headers={"User-Agent": "maldl-dataset-fetch/1.0 (research use; github.com/iamvisheshsrivastava/microscopy-active-learning)"})
+    with urllib.request.urlopen(req, timeout=60) as r:
         return json.load(r)["files"][0]
 
 
@@ -36,7 +40,18 @@ def download(article, dest_dir, verify=True):
     dest = Path(dest_dir) / f["name"]
     if not dest.exists() or dest.stat().st_size != f["size"]:
         dest.parent.mkdir(parents=True, exist_ok=True)
-        urllib.request.urlretrieve(f["download_url"], dest)
+        req = urllib.request.Request(f["download_url"], headers={"User-Agent": "maldl-dataset-fetch/1.0 (research use; github.com/iamvisheshsrivastava/microscopy-active-learning)"})
+        for attempt in range(6):
+            try:
+                with urllib.request.urlopen(req, timeout=120) as r, open(dest, "wb") as out:
+                    while chunk := r.read(1 << 20):
+                        out.write(chunk)
+                break
+            except urllib.error.HTTPError as e:
+                print(f"download {f['name']} failed ({e.code}), retry {attempt + 1}", flush=True)
+                time.sleep(20 * (attempt + 1))
+        else:
+            raise RuntimeError(f"could not download {f['name']}")
     if verify and f.get("computed_md5"):
         h = hashlib.md5()
         with open(dest, "rb") as fh:

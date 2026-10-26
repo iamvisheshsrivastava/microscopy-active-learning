@@ -62,7 +62,7 @@ def main(argv=None):
     ap.add_argument("--timeout-min", type=int, default=180)
     a = ap.parse_args(argv)
     user = re.search(r"username:\s*(\S+)", kaggle("config", "view")).group(1)
-    slug = f"maldl-{a.job}"
+    slug = f"maldl-{a.job.replace('_', '-')}"
     with tempfile.TemporaryDirectory() as d:
         d = Path(d)
         (d / "job.py").write_text(TEMPLATE.format(
