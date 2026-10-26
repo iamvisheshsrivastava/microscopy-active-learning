@@ -2,6 +2,8 @@
 
 [![ci](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml/badge.svg)](https://github.com/iamvisheshsrivastava/microscopy-active-learning/actions/workflows/ci.yml)
 
+**Live results page:** https://iamvisheshsrivastava.github.io/microscopy-active-learning/
+
 A small, honest prototype: self-supervised embeddings of microstructure images, plus
 pool-based active learning, a property surrogate with uncertainty, and SEM+EBSD cross-modal
 pretraining, evaluated under scale shift and instrument shift. Most experiments use a synthetic
