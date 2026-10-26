@@ -24,6 +24,9 @@ JOBS = {
         f"python scripts/run_real.py --encoder pretrained --backbone facebook/dinov2-base --size 224 "
         f"--device cuda --tag _real_dinov2_base --out {OUT}",
     ],
+    # second real source: Aachen-Heerlen steel SEM (CC0); probe image layout first
+    "aachen_probe": [f"python scripts/prepare_aachen.py --probe --out {OUT}"],
+    "aachen": [f"python scripts/prepare_aachen.py --crop-bottom 0 --out {OUT}"],
     # longer contrastive pretraining on GPU at 128 px
     "contrastive128": [
         f"python scripts/run_real.py --size 128 --epochs 150 --seeds 5 --device cuda "
@@ -39,7 +42,8 @@ def sh(cmd):
 sh("git clone --depth 1 {repo} /tmp/repo")  # outside /kaggle/working so it is not returned as output
 os.chdir("/tmp/repo")
 sh("pip install -q --no-deps -e . && pip install -q transformers")
-sh("python scripts/get_uhcsdb.py")
+if {uhcsdb}:
+    sh("python scripts/get_uhcsdb.py")
 sh("nvidia-smi -L")
 for cmd in {jobs!r}:
     sh(cmd)
@@ -61,7 +65,8 @@ def main(argv=None):
     slug = f"maldl-{a.job}"
     with tempfile.TemporaryDirectory() as d:
         d = Path(d)
-        (d / "job.py").write_text(TEMPLATE.format(repo=REPO, jobs=JOBS[a.job]), encoding="utf-8")
+        (d / "job.py").write_text(TEMPLATE.format(
+            repo=REPO, jobs=JOBS[a.job], uhcsdb=not a.job.startswith("aachen")), encoding="utf-8")
         (d / "kernel-metadata.json").write_text(json.dumps({
             "id": f"{user}/{slug}", "title": slug, "code_file": "job.py", "language": "python",
             "kernel_type": "script", "is_private": "true", "enable_gpu": "true",
@@ -82,7 +87,8 @@ def main(argv=None):
         out = Path(a.out)
         out.mkdir(parents=True, exist_ok=True)
         for f in dl.rglob("*"):
-            if f.is_file() and f.suffix in {".csv", ".png", ".md", ".log"} and f.stat().st_size < 5e6:
+            if f.is_file() and f.suffix in {".csv", ".png", ".md", ".log", ".npz"} \
+                    and f.stat().st_size < 12e6:
                 (out / f.name).write_bytes(f.read_bytes())
     print("results copied to", out)
     return 0 if "COMPLETE" in st else 1
