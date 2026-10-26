@@ -79,13 +79,13 @@ def _structure(cls, rng, size, scale):
         prop += 600.0 * prec.mean()
     prop += rng.normal(0, 5.0)
     return {
-    "img": img,
-    "lab": lab,
-    "edge": edge,
-    "prec": prec,
-    "theta": theta,
-    "n": n,
-    "prop": float(prop),
+        "img": img,
+        "lab": lab,
+        "edge": edge,
+        "prec": prec,
+        "theta": theta,
+        "n": n,
+        "prop": float(prop),
     }
 
 
