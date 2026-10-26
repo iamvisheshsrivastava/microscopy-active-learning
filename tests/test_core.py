@@ -203,6 +203,43 @@ def test_backbone_preprocessing_shape_and_range():
     assert torch.allclose(t[:, 0] * 0.229 + 0.485, t[:, 1] * 0.224 + 0.456, atol=1e-5)  # same gray image
 
 
+def _load_script(name):
+    import importlib.util
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[1] / "scripts" / f"{name}.py"
+    spec = importlib.util.spec_from_file_location(name, path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
+def test_aachen_polygon_parsing(tmp_path):
+    pa = _load_script("prepare_aachen")
+    assert pa.shoelace(np.array([[0, 0], [4, 0], [4, 3], [0, 3]])) == 12.0
+    f = tmp_path / "poly.csv"
+    f.write_text("image_url;point;polygon\n"
+                 "IMG_1.png;(1, 1);[(0, 0), (4, 0), (4, 3), (0, 3)]\n"
+                 "IMG_1.png;(2, 2);[(0, 0), (2, 0), (2, 2)]\n"
+                 "IMG_2.png;(3, 3);[(0, 0), (1, 1)]\n", encoding="utf-8")
+    areas = pa.load_polygons(f)
+    assert areas["IMG_1.png"] == [12.0, 2.0] and "IMG_2.png" not in areas  # <3 points skipped
+
+
+def test_aachen_split_never_shares_sample_types():
+    ra = _load_script("run_aachen")
+    n = 400
+    rng = np.random.default_rng(0)
+    meta = {"sample_type": rng.choice(list("ABCDEFGHIJ"), n),
+            "angle": rng.choice(["perpendicular", "tilt"], n, p=[0.7, 0.3]),
+            "direction": rng.choice(["Vertical", "Horizontal"], n),
+            "temperature": rng.choice([400, 500], n)}
+    pool, ev = ra.make_split(meta, np.ones(n, bool), seed=0, test_frac=0.3, min_eval=5,
+                             need_both_classes=True)
+    test_types = set(meta["sample_type"][np.concatenate(list(ev.values()))])
+    assert not set(meta["sample_type"][pool]) & test_types
+    assert set(ev) == {"in_dist", "tilt_shift", "direction_shift"}
+
+
 def test_stats_summary():
     rows = [{"strategy": s, "seed": sd, "round": r, "m": 0.5 + 0.1 * r + (0.05 if s == "b" else 0)
              + 0.01 * sd} for s in "ab" for sd in range(6) for r in range(3)]

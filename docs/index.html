@@ -27,12 +27,15 @@
 <body>
 <main>
   <h1>microscopy-active-learning</h1>
-  <p class="muted">Self-supervised embeddings, active learning, property surrogates and SEM/EBSD cross-modal pretraining,
-  evaluated under scale and instrument shift. <a href="https://github.com/iamvisheshsrivastava/microscopy-active-learning">Code, tests and full README on GitHub</a>.</p>
+  <p class="muted">Representation learning and active learning for multi-scale scientific imaging: self-supervised and cross-modal embeddings,
+  acquisition under cost and uncertainty, property surrogates, evaluated under scale and instrument shift.
+  <a href="https://github.com/iamvisheshsrivastava/microscopy-active-learning">Code and README</a> ·
+  <a href="https://github.com/iamvisheshsrivastava/microscopy-active-learning/blob/main/docs/report.md">Technical report</a> ·
+  <a href="https://github.com/iamvisheshsrivastava/microscopy-active-learning/blob/main/docs/results.md">Full results</a></p>
 
-  <div class="note"><strong>Summary.</strong> Experiments run on a controllable synthetic generator and on 961 real steel micrographs (UHCSDB)
-  with specimen-grouped splits and Holm-corrected paired tests over 10 seeds. On real data, active-learning strategies were not
-  distinguishable from random sampling and contrastive pretraining showed no benefit at this scale; the numbers below are reported as measured.</div>
+  <div class="note"><strong>Summary.</strong> Experiments run on a controllable synthetic generator and on two real steel collections
+  (UHCSDB, 961 micrographs; Aachen-Heerlen, 1,705 images) with grouped splits and Holm-corrected paired tests over 10 seeds.
+  The encoder determines most of the outcome; no query strategy was distinguishable from random sampling on real data.</div>
 
   <h2>What is in the repo</h2>
   <ul>
@@ -40,7 +43,7 @@
     <li>SimCLR-style and CLIP-style (SEM+EBSD) pretraining; handcrafted-feature and random-init baselines.</li>
     <li>Pool-based active learning: random, uncertainty, diversity (k-center), hybrid, cost-aware; GP property surrogate with uncertainty.</li>
     <li>Calibration (ECE, interval coverage), paired Wilcoxon tests with Holm correction and bootstrap CIs over 10 seeds.</li>
-    <li>Real-data pipeline for UHCSDB with specimen-grouped splits and real magnification and detector shifts; 29 tests and CI.</li>
+    <li>Real-data pipeline for UHCSDB with specimen-grouped splits and real magnification and detector shifts; 32 tests and CI.</li>
   </ul>
 
   <h2>Real data: UHCSDB (7-class microconstituent, accuracy at 94 labels, 10 seeds)</h2>
@@ -58,7 +61,7 @@
     <tr><td>DINOv2-base (frozen)</td><td>hybrid</td><td>0.772±0.059</td><td>0.641±0.147</td><td>0.737±0.140</td></tr>
   </table>
   <p>Representation quality dominates: frozen pretrained DINOv2 features (GPU runs) lift in-distribution accuracy from about 0.55-0.61 to 0.72-0.77 and
-  detector-shift accuracy from near the majority-class rate (0.30-0.37) to 0.67-0.71. Small CNNs trained from scratch on the unlabeled pool were not better
+  detector-shift accuracy from near the majority-class rate (0.30-0.40) to 0.67-0.71. Small CNNs trained from scratch on the unlabeled pool were not better
   than random-init CNNs or handcrafted texture features, and no active-learning strategy is distinguishable from random after Holm correction.</p>
   <img src="results_real_contrastive.png" alt="Learning curves on UHCSDB for four query strategies under in-distribution, magnification shift and detector shift" loading="lazy">
 
@@ -72,9 +75,15 @@
   <p>A GP on embeddings predicts a synthetic hardness: R² about 0.70 in-distribution, 90% intervals about 0.88 covered in-distribution but only about 0.66 to 0.71 under shift. No active strategy beats random.</p>
   <img src="results_surrogate.png" alt="Property RMSE learning curves for the GP surrogate under three test conditions" loading="lazy">
 
+  <h2>Second real source: Aachen-Heerlen steel SEM (1,705 images, steel sample types held out)</h2>
+  <p>Frozen DINOv2-base features, 90 labels, 10 seeds. The martensite-austenite island area fraction (from expert polygons) is predicted with
+  R&sup2; about 0.34 (RMSE 0.057 against 0.077 for the mean predictor) in distribution and 0.39 under a cut-direction shift, but only about 0.10 under tilt.
+  Transformation temperature of unseen steels is at the majority-class rate (0.49 vs 0.44). No acquisition strategy improves on random; diversity and hybrid
+  selection reduce the coverage of 90% intervals from 0.87 to 0.75-0.76.</p>
+
   <h2>Data and citation</h2>
   <p>Real data: UHCSDB (DeCost et al., <em>Integr. Mater. Manuf. Innov.</em> 6, 197-205, 2017, CC BY 3.0 US), used via the Zenodo-archived mirror
-  <a href="https://doi.org/10.5281/zenodo.23050463">doi:10.5281/zenodo.23050463</a> because the original NIST host was unreachable. Not redistributed here.</p>
+  <a href="https://doi.org/10.5281/zenodo.23050463">doi:10.5281/zenodo.23050463</a> because the original NIST host was unreachable. Aachen-Heerlen: Iren et al., <em>Sci. Data</em> 2021, CC0. Datasets are not redistributed here.</p>
   <p class="muted">Author: Vishesh Srivastava. MIT licence.</p>
 </main>
 </body>

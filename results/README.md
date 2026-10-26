@@ -19,3 +19,10 @@ Every file here comes from a seeded run; `*_summary.md` are regenerated from the
 
 Real-data runs use specimen-grouped splits and exclude images without a specimen id; see the main README.
 Files from an earlier iteration (5 seeds, pre-refactor code) were removed and are not comparable.
+
+Second real source (Aachen-Heerlen; embeddings built on a Kaggle GPU with `kaggle_submit.py --job aachen`):
+
+| files | what | seeds | command |
+|---|---|---|---|
+| `results_aachen_cls_{base,small}.*` | temperature (400/500 C), sample-type-grouped, tilt and cut-direction shifts | 10 | `run_aachen.py --task cls --backbone base` |
+| `results_aachen_reg_{base,small}.*` | MA-island area fraction, GP surrogate | 10 | `run_aachen.py --task reg --backbone base` |
