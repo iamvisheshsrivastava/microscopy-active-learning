@@ -18,6 +18,8 @@ pip install -e ".[dev]"
 pytest -q
 ```
 
+Python 3.10-3.13 are supported and tested in CI.
+
 ## Adding an experiment
 
 1. Add or reuse a script in `scripts/`; write `results/<tag>.csv` plus a `_summary.md` (run `python scripts/resummarize.py`).
