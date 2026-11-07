@@ -65,6 +65,8 @@ python scripts/run_aachen.py --task reg --backbone base
 python scripts/resummarize.py                      # rebuild every summary table from the saved CSVs
 ```
 
+Python 3.10-3.13 are supported and tested in CI.
+
 Every run writes `results/<tag>.csv` (all seeds and rounds), a learning-curve `.png` and a `_summary.md`.
 `results/README.md` maps each file to the command that produced it.
 
