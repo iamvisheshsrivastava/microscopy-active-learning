@@ -1,4 +1,6 @@
 """SimCLR-style self-supervised training with multi-scale random-resized crops."""
+import warnings
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -57,6 +59,20 @@ def nt_xent(z1, z2, tau=0.2):
     return F.cross_entropy(sim, tgt)
 
 
+def _resolve_batch(n, batch):
+    """Clamp `batch` to the dataset size; contrastive losses need at least two samples."""
+    if n < 2:
+        raise ValueError(f"contrastive training needs at least 2 samples, got {n}")
+    if batch < 2:
+        raise ValueError(f"contrastive training needs batch >= 2, got {batch}")
+    if batch > n:
+        warnings.warn(
+            f"batch ({batch}) is larger than the dataset ({n}); using {n} samples per step",
+            stacklevel=3)
+        return n
+    return batch
+
+
 def pretrain(encoder, images, epochs=15, batch=64, lr=2e-3, seed=0, tau=0.2,
              strong=False, device="cpu"):
     """images: (N,C,H,W) numpy. Trains encoder in place; returns loss history."""
@@ -66,6 +82,7 @@ def pretrain(encoder, images, epochs=15, batch=64, lr=2e-3, seed=0, tau=0.2,
     rng = np.random.default_rng(seed)
     torch.manual_seed(seed)
     x = torch.from_numpy(images)
+    batch = _resolve_batch(len(x), batch)
     out = x.shape[-1]
     # projection head is used only for the loss and discarded afterwards
     head = nn.Sequential(nn.Linear(encoder.dim, 128), nn.ReLU(), nn.Linear(128, 64))
@@ -87,7 +104,7 @@ def pretrain(encoder, images, epochs=15, batch=64, lr=2e-3, seed=0, tau=0.2,
             opt.step()
             tot += loss.item()
             cnt += 1
-        hist.append(tot / max(cnt, 1))
+        hist.append(tot / cnt)
     encoder.eval().cpu()
     return hist
 

@@ -66,6 +66,34 @@ def test_nt_xent_prefers_matched_pairs():
     assert clip_loss(z, z + 0.01 * torch.randn_like(z)) < clip_loss(z, torch.randn(16, 8))
 
 
+def test_pretrain_clamps_batch_to_dataset():
+    x, _ = make_dataset(8, seed=0, size=32)
+    with pytest.warns(UserWarning, match="larger than the dataset"):
+        hist = pretrain(Encoder(), x, epochs=1, batch=64, seed=0)
+    assert len(hist) == 1 and np.isfinite(hist[0]) and hist[0] > 0.0
+
+
+def test_crossmodal_clamps_batch_to_dataset():
+    sem, ebsd, _, _ = make_paired_dataset(8, seed=0, size=32)
+    with pytest.warns(UserWarning, match="larger than the dataset"):
+        hist = pretrain_crossmodal(Encoder(norm_input=True), Encoder(in_ch=2), sem, ebsd,
+                                   epochs=1, batch=64, seed=0)
+    assert len(hist) == 1 and np.isfinite(hist[0]) and hist[0] > 0.0
+
+
+def test_pretrain_rejects_fewer_than_two_samples():
+    x, _ = make_dataset(1, seed=0, size=32)
+    with pytest.raises(ValueError, match="at least 2 samples"):
+        pretrain(Encoder(), x, epochs=1, batch=64, seed=0)
+
+
+def test_crossmodal_rejects_fewer_than_two_samples():
+    sem, ebsd, _, _ = make_paired_dataset(1, seed=0, size=32)
+    with pytest.raises(ValueError, match="at least 2 samples"):
+        pretrain_crossmodal(Encoder(norm_input=True), Encoder(in_ch=2), sem, ebsd,
+                            epochs=1, batch=64, seed=0)
+
+
 def _fake_state(n=60, d=8, seed=0):
     rng = np.random.default_rng(seed)
     y = np.arange(n) % NUM_CLASSES
