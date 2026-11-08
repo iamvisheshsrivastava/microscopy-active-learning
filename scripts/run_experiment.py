@@ -4,7 +4,6 @@ Variants: default = baseline (weak augmentation, no input normalisation).
 `--norm-input --strong-aug` = instrument-robustness variant.
 """
 import argparse
-import csv
 import sys
 from pathlib import Path
 
@@ -15,8 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from maldl.active.loop import run_loop  # noqa: E402
 from maldl.active.strategies import STRATEGIES  # noqa: E402
 from maldl.data.synthetic import make_dataset  # noqa: E402
+from maldl.eval.report import plot_learning_curves, write_rows_csv  # noqa: E402
 from maldl.eval.shift import build_eval_sets  # noqa: E402
-from maldl.eval.stats import curves, markdown_summary  # noqa: E402
+from maldl.eval.stats import markdown_summary  # noqa: E402
 from maldl.models.encoder import Encoder  # noqa: E402
 from maldl.training.contrastive import embed, pretrain  # noqa: E402
 
@@ -57,33 +57,11 @@ def main(argv=None):
                               costs=info["cost"]):
                 rows.append({"strategy": s, "seed": seed, **r})
     name = f"results{a.tag}"
-    with open(out / f"{name}.csv", "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
-        w.writeheader()
-        w.writerows(rows)
+    write_rows_csv(rows, out / f"{name}.csv")
 
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 4, figsize=(19, 4))
-    for ax, m in zip(axes[:3], METRICS):
-        for s in STRATEGIES:
-            c = curves(rows, s, m)
-            nl = curves(rows, s, "n_labeled").mean(0)
-            ax.plot(nl, c.mean(0), marker="o", label=s)
-            ax.fill_between(nl, c.mean(0) - c.std(0), c.mean(0) + c.std(0), alpha=0.1)
-        ax.set_title(m)
-        ax.set_xlabel("labels")
-        ax.set_ylabel("accuracy")
-    for s in STRATEGIES:
-        ax = axes[3]
-        ax.plot(curves(rows, s, "cum_cost").mean(0), curves(rows, s, "in_dist").mean(0),
-                marker="o", label=s)
-    axes[3].set_title("in_dist vs cumulative (assumed) annotation cost")
-    axes[3].set_xlabel("cost units")
-    axes[0].legend()
-    fig.tight_layout()
-    fig.savefig(out / f"{name}.png", dpi=110)
+    plot_learning_curves(rows, METRICS, list(STRATEGIES), out / f"{name}.png",
+                         ylabel="accuracy", cost_metric="cum_cost",
+                         cost_title="in_dist vs cumulative (assumed) annotation cost")
 
     strategies = list(STRATEGIES)
     md = ["## Accuracy\n", markdown_summary(rows, strategies, METRICS),

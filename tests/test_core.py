@@ -148,6 +148,18 @@ def test_load_table(tmp_path):
     assert x.shape == (4, 1, 16, 16) and classes == ["a", "b"] and meta["group"][0] == "s0"
 
 
+def test_write_rows_csv(tmp_path):
+    from maldl.eval.report import write_rows_csv
+    rows = [{"strategy": "a", "seed": 0, "v": 0.5}, {"strategy": "b", "seed": 0, "v": 0.25}]
+    path = tmp_path / "rows.csv"
+    write_rows_csv(rows, path)
+    assert path.read_bytes() == b"strategy,seed,v\r\na,0,0.5\r\nb,0,0.25\r\n"
+    write_rows_csv([{"b": 1, "a": 2}], path)
+    assert path.read_bytes() == b"b,a\r\n1,2\r\n"  # column order follows the first row
+    with pytest.raises(ValueError):
+        write_rows_csv([], tmp_path / "empty.csv")
+
+
 def test_load_uhcsdb_layout(tmp_path):
     from maldl.data.uhcsdb import load_uhcsdb
     (tmp_path / "micrographs").mkdir()

@@ -1,6 +1,5 @@
 """Active learning for a property surrogate (GP on SimCLR embeddings), with uncertainty."""
 import argparse
-import csv
 import sys
 from pathlib import Path
 
@@ -9,8 +8,9 @@ import torch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from maldl.active.loop import run_regression_loop  # noqa: E402
 from maldl.data.synthetic import make_dataset  # noqa: E402
+from maldl.eval.report import plot_learning_curves, write_rows_csv  # noqa: E402
 from maldl.eval.shift import build_eval_sets  # noqa: E402
-from maldl.eval.stats import curves, markdown_summary  # noqa: E402
+from maldl.eval.stats import markdown_summary  # noqa: E402
 from maldl.models.encoder import Encoder  # noqa: E402
 from maldl.training.contrastive import embed, pretrain  # noqa: E402
 
@@ -46,26 +46,11 @@ def main(argv=None):
                                          a.rounds, seed, costs=info["cost"]):
                 rows.append({"strategy": s, "seed": seed, **r})
     name = f"results{a.tag}"
-    with open(out / f"{name}.csv", "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
-        w.writeheader()
-        w.writerows(rows)
+    write_rows_csv(rows, out / f"{name}.csv")
 
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-    for ax, st in zip(axes, SETS):
-        for s in STRATS:
-            c = curves(rows, s, f"{st}_rmse")
-            nl = curves(rows, s, "n_labeled").mean(0)
-            ax.plot(nl, c.mean(0), marker="o", label=s)
-            ax.fill_between(nl, c.mean(0) - c.std(0), c.mean(0) + c.std(0), alpha=0.1)
-        ax.set_title(f"{st}: property RMSE (lower is better)")
-        ax.set_xlabel("labels")
-    axes[0].legend()
-    fig.tight_layout()
-    fig.savefig(out / f"{name}.png", dpi=110)
+    plot_learning_curves(rows, SETS, STRATS, out / f"{name}.png",
+                         metric_columns=[f"{st}_rmse" for st in SETS],
+                         titles=[f"{st}: property RMSE (lower is better)" for st in SETS])
     md = ["## Property RMSE (HV-like units, lower is better)\n",
           markdown_summary(rows, STRATS, [f"{m}_rmse" for m in SETS]),
           "\n## Property R2 (higher is better)\n",

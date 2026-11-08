@@ -7,7 +7,6 @@ images of pool specimens (labels hidden until queried). Test sets use held-out s
   detector_shift BSE detector                       (real instrument/contrast shift)
 """
 import argparse
-import csv
 import sys
 from pathlib import Path
 
@@ -19,7 +18,8 @@ from maldl.active.loop import run_loop  # noqa: E402
 from maldl.active.strategies import STRATEGIES  # noqa: E402
 from maldl.data.splits import group_split  # noqa: E402
 from maldl.data.uhcsdb import load_uhcsdb  # noqa: E402
-from maldl.eval.stats import curves, markdown_summary  # noqa: E402
+from maldl.eval.report import plot_learning_curves, write_rows_csv  # noqa: E402
+from maldl.eval.stats import markdown_summary  # noqa: E402
 from maldl.models.classical import classical_embed  # noqa: E402
 from maldl.models.encoder import Encoder  # noqa: E402
 from maldl.training.contrastive import embed, pretrain  # noqa: E402
@@ -115,28 +115,12 @@ def main(argv=None):
     name = f"results{a.tag}"
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    with open(out / f"{name}.csv", "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
-        w.writeheader()
-        w.writerows(rows)
+    write_rows_csv(rows, out / f"{name}.csv")
 
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-    for ax, m in zip(axes, SETS):
-        for s in STRATS:
-            c = curves(rows, s, m)
-            nl = curves(rows, s, "n_labeled").mean(0)
-            ax.plot(nl, c.mean(0), marker="o", label=s)
-            ax.fill_between(nl, c.mean(0) - c.std(0), c.mean(0) + c.std(0), alpha=0.1)
-        ax.axhline(np.mean([mj[m] for mj in majority]), ls=":", c="gray", label="majority class")
-        ax.set_title(f"UHCSDB {m}")
-        ax.set_xlabel("labels")
-        ax.set_ylabel("accuracy")
-    axes[0].legend()
-    fig.tight_layout()
-    fig.savefig(out / f"{name}.png", dpi=110)
+    plot_learning_curves(rows, SETS, STRATS, out / f"{name}.png", ylabel="accuracy",
+                         titles=[f"UHCSDB {m}" for m in SETS],
+                         baseline={m: float(np.mean([mj[m] for mj in majority])) for m in SETS},
+                         baseline_label="majority class")
     mean_sz = {k: float(np.mean([s[k] for s in sizes])) for k in sizes[0]}
     md = [f"Encoder: {a.encoder} (norm_input={a.norm_input}, strong_aug={a.strong_aug}); "
           f"{nc} classes; mean sizes: " + ", ".join(f"{k}={v:.0f}" for k, v in mean_sz.items()),
