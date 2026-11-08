@@ -28,8 +28,15 @@ def paired_test(a, b):
         return float(d.mean()), float(wilcoxon(a, b).pvalue)
 
 
-def markdown_summary(rows, strategies, metrics, baseline="random", fmt="{:.3f}"):
-    """Final-round value (mean±std) and ALC, plus ALC difference vs `baseline` with p-value."""
+def markdown_summary(rows, strategies, metrics, baseline="random", fmt="{:.3f}", correction="holm"):
+    """Final-round value (mean±std) and ALC, plus ALC difference vs `baseline` with p-value.
+
+    `correction` is "holm" (family-wise error control, the default) or "bh" (Benjamini-Hochberg FDR).
+    """
+    corrections = {"holm": ("Holm", holm), "bh": ("BH", benjamini_hochberg)}
+    if correction not in corrections:
+        raise ValueError(f"correction must be one of {sorted(corrections)}, got {correction!r}")
+    label, adjust = corrections[correction]
     n_seeds = len({r["seed"] for r in rows})
     out = [f"Final round, mean±std over {n_seeds} seeds; ALC (mean over rounds) in parentheses.\n",
            "| strategy | " + " | ".join(metrics) + " |",
@@ -46,16 +53,16 @@ def markdown_summary(rows, strategies, metrics, baseline="random", fmt="{:.3f}")
                     bootstrap_ci(alc(curves(rows, s, m)) - alc(curves(rows, baseline, m))))
            for s in others for m in metrics}
     keys = list(res)
-    adj = dict(zip(keys, holm([res[k][1] for k in keys])))
+    adj = dict(zip(keys, adjust([res[k][1] for k in keys])))
     out += ["", f"ALC difference vs `{baseline}`: mean diff [95% bootstrap CI over seeds], "
-                f"Wilcoxon p, Holm-adjusted p over all {len(keys)} cells of this table "
+                f"Wilcoxon p, {label}-adjusted p over all {len(keys)} cells of this table "
                 f"(p cannot go below ~{2 / 2 ** n_seeds:.3f} with {n_seeds} seeds).\n",
             "| strategy | " + " | ".join(metrics) + " |", "|---|" + "---|" * len(metrics)]
     for s in others:
         cells = []
         for m in metrics:
             d, p, (lo, hi) = res[(s, m)]
-            cells.append(f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] p={p:.2f} (Holm {adj[(s, m)]:.2f})")
+            cells.append(f"{d:+.3f} [{lo:+.3f}, {hi:+.3f}] p={p:.2f} ({label} {adj[(s, m)]:.2f})")
         out.append(f"| {s} | " + " | ".join(cells) + " |")
     return "\n".join(out)
 
@@ -68,6 +75,18 @@ def holm(pvals):
     running = 0.0
     for rank, i in enumerate(order):
         running = max(running, min(1.0, (len(p) - rank) * p[i]))
+        adj[i] = running
+    return adj.tolist()
+
+
+def benjamini_hochberg(pvals):
+    """Benjamini-Hochberg (FDR) adjusted p-values, in the input order."""
+    p = np.asarray(pvals, dtype=float)
+    order = np.argsort(p)[::-1]
+    adj = np.empty_like(p)
+    running = 1.0
+    for back_rank, i in enumerate(order):
+        running = min(running, min(1.0, len(p) * p[i] / (len(p) - back_rank)))
         adj[i] = running
     return adj.tolist()
 
