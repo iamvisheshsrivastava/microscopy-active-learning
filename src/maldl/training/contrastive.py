@@ -19,6 +19,7 @@ def random_resized_crop(x, rng, out=64, scale=(0.15, 1.0)):
 
 
 def gaussian_blur(v, sigma):
+    """Separable Gaussian blur with the given sigma. v: (C,H,W) tensor -> (C,H,W) blurred tensor."""
     r = max(1, int(3 * sigma))
     k = torch.exp(-0.5 * (torch.arange(-r, r + 1, dtype=v.dtype) / sigma) ** 2)
     k = k / k.sum()
@@ -39,6 +40,7 @@ def intensity_jitter(v, rng, strong=False):
 
 
 def augment(x, rng, out=64, strong=False):
+    """One SimCLR view of x: (C,H,W) tensor -> random-resized crop (out,out), flips, rot90, intensity jitter."""
     v = random_resized_crop(x, rng, out)
     if rng.random() < 0.5:
         v = v.flip(-1)
@@ -49,6 +51,7 @@ def augment(x, rng, out=64, strong=False):
 
 
 def nt_xent(z1, z2, tau=0.2):
+    """NT-Xent loss for two views. z1, z2: (N,D) unnormalised embeddings -> scalar loss."""
     z = F.normalize(torch.cat([z1, z2]), dim=1)
     n = z1.shape[0]
     sim = z @ z.T / tau
@@ -94,6 +97,7 @@ def pretrain(encoder, images, epochs=15, batch=64, lr=2e-3, seed=0, tau=0.2,
 
 @torch.no_grad()
 def embed(encoder, images, batch=256):
+    """images: (N,C,H,W) numpy -> (N,dim) numpy embeddings; eval mode, no gradients, encoder untouched."""
     encoder.eval()
     x = torch.from_numpy(images)
     return torch.cat([encoder(x[i:i + batch]) for i in range(0, len(x), batch)]).numpy()

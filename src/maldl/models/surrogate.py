@@ -22,6 +22,7 @@ class GPSurrogate:
         return self.pca.transform(self.sc.transform(emb)) / self.scale
 
     def fit(self, emb, y):
+        """Fit the GP on transformed embeddings. emb: (N,D), y: (N,) property values -> self."""
         k = ConstantKernel(1.0) * RBF(length_scale=np.sqrt(self.nc)) + WhiteKernel(0.1)
         self.gp = GaussianProcessRegressor(k, normalize_y=True, random_state=0)
         with warnings.catch_warnings():
@@ -30,5 +31,6 @@ class GPSurrogate:
         return self
 
     def predict(self, emb):
+        """Predict on transformed embeddings. emb: (N,D) -> (mean (N,), std (N,)) numpy arrays."""
         mean, std = self.gp.predict(self._t(emb), return_std=True)
         return mean, std

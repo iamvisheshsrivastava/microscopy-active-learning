@@ -22,6 +22,7 @@ def _read(path, size):
 
 
 def load_folder(root, size=64):
+    """Load root/<class_name>/*.{png,jpg,tif} as (N,1,size,size) float32 in [0,1], int64 labels, sorted class names."""
     root = Path(root)
     classes = sorted(p.name for p in root.iterdir() if p.is_dir())
     if not classes:

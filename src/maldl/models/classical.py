@@ -25,6 +25,7 @@ def _hist(v, bins, rng, weights=None):
 
 
 def image_features(img, sigmas=(1.0, 2.0, 4.0)):
+    """Handcrafted texture vector for one 2-D image: (16 + 3*(2+8+8) + 9,) float32, contrast/brightness invariant."""
     im = (img - img.mean()) / (img.std() + 1e-6)
     feats = [_hist(im, 16, (-3, 3))]
     for s in sigmas:

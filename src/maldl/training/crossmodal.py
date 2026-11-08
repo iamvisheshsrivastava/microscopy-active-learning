@@ -13,11 +13,13 @@ from .contrastive import intensity_jitter, random_resized_crop
 
 
 def pair_augment(sem, ebsd, rng, out=64, strong=False):
+    """Shared crop of a registered pair. sem: (1,H,W), ebsd: (2,H,W) -> jittered (1,out,out), (2,out,out)."""
     v = random_resized_crop(torch.cat([sem, ebsd]), rng, out)
     return intensity_jitter(v[:1], rng, strong), v[1:]
 
 
 def clip_loss(za, zb, tau=0.2):
+    """Symmetric CLIP loss over a batch. za, zb: (N,D) embeddings -> scalar loss."""
     za, zb = F.normalize(za, dim=1), F.normalize(zb, dim=1)
     logits = za @ zb.T / tau
     tgt = torch.arange(len(za), device=za.device)
