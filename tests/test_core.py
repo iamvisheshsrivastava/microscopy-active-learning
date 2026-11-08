@@ -148,6 +148,28 @@ def test_load_table(tmp_path):
     assert x.shape == (4, 1, 16, 16) and classes == ["a", "b"] and meta["group"][0] == "s0"
 
 
+def test_load_folder(tmp_path):
+    from maldl.data.folder import load_folder
+    for cls in ("b_class", "a_class"):
+        (tmp_path / cls).mkdir()
+    for name in ("1.png", "2.png"):
+        Image.fromarray(np.full((5, 7), 200, np.uint8)).save(tmp_path / "a_class" / name)
+    Image.fromarray(np.zeros((9, 9), np.uint8)).save(tmp_path / "b_class" / "3.tif")
+    x, y, classes = load_folder(tmp_path, size=16)
+    assert classes == ["a_class", "b_class"]  # sorted class names, not creation order
+    assert x.shape == (3, 1, 16, 16) and x.dtype == np.float32
+    assert y.tolist() == [0, 0, 1]
+    assert np.allclose(x[0], 200 / 255) and x[2].max() == 0.0
+    empty = tmp_path / "empty"
+    empty.mkdir()
+    with pytest.raises(FileNotFoundError):
+        load_folder(empty)
+    noimg = tmp_path / "noimg"
+    (noimg / "cls").mkdir(parents=True)
+    with pytest.raises(FileNotFoundError):
+        load_folder(noimg)
+
+
 def test_load_uhcsdb_layout(tmp_path):
     from maldl.data.uhcsdb import load_uhcsdb
     (tmp_path / "micrographs").mkdir()
@@ -257,6 +279,21 @@ def test_holm_and_bootstrap():
     assert lo == pytest.approx(0.1) and hi == pytest.approx(0.1)
     lo, hi = bootstrap_ci(np.arange(10, dtype=float))
     assert lo < 4.5 < hi
+
+
+def test_build_eval_sets():
+    from maldl.eval.shift import build_eval_sets
+    torch.manual_seed(0)
+    enc = Encoder()
+    ev = build_eval_sets(enc, seed=0, n=20, size=16)
+    assert set(ev) == {"in_dist", "scale_shift", "source_shift"}
+    for emb, y_class, y_property in ev.values():
+        assert emb.shape == (20, 128) and np.isfinite(emb).all()
+        assert len(y_class) == len(y_property) == 20
+    again = build_eval_sets(enc, seed=0, n=20, size=16)
+    assert all(np.array_equal(ev[k][0], again[k][0]) for k in ev)  # same seed -> same embeddings
+    other = build_eval_sets(enc, seed=1, n=20, size=16)
+    assert not np.array_equal(ev["in_dist"][0], other["in_dist"][0])
 
 
 def test_end_to_end_smoke():
