@@ -8,15 +8,18 @@ import numpy as np
 
 
 def entropy(probs):
+    """Shannon entropy (nats) of each row. probs: (N,C) class probabilities -> (N,) scores."""
     p = np.clip(probs, 1e-12, 1.0)
     return -(p * np.log(p)).sum(1)
 
 
 def random_strategy(emb, unc, labeled, unlabeled, b, rng, cost=None):
+    """Uniformly random query: b unique indices drawn from unlabeled (ignores all scores)."""
     return rng.choice(unlabeled, size=min(b, len(unlabeled)), replace=False)
 
 
 def uncertainty_strategy(emb, unc, labeled, unlabeled, b, rng, cost=None):
+    """Query the b most uncertain items. unc: (N,) entropy (classification) or predictive std (regression)."""
     return unlabeled[np.argsort(-unc[unlabeled], kind="stable")[:b]]
 
 
@@ -42,6 +45,7 @@ def _kcenter(emb, labeled, candidates, b):
 
 
 def diversity_strategy(emb, unc, labeled, unlabeled, b, rng, cost=None):
+    """k-center over pool embeddings: greedily pick the b items farthest from the labeled set and each other."""
     return _kcenter(emb, labeled, unlabeled, b)
 
 

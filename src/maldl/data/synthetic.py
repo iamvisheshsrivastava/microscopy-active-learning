@@ -103,6 +103,7 @@ def _cost(n):
 
 
 def generate_image(cls, rng, size=64, scale=1.0, source=SOURCE_A):
+    """One synthetic SEM micrograph of class `cls` (0-3): (size,size) float32 in [0,1]."""
     s = _structure(cls, rng, size, scale)
     return _sem(s, rng, source)
 

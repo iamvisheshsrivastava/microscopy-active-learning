@@ -22,6 +22,7 @@ class Encoder(nn.Module):
         self.fc = nn.Linear(64, dim)
 
     def forward(self, x):
+        """x: (N,in_ch,H,W) tensor -> (N,dim) embeddings."""
         if self.norm_input:
             m = x.mean(dim=(1, 2, 3), keepdim=True)
             s = x.std(dim=(1, 2, 3), keepdim=True)
