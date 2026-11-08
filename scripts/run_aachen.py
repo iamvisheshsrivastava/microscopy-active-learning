@@ -19,7 +19,8 @@ import numpy as np
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 from maldl.active.loop import run_loop, run_regression_loop  # noqa: E402
 from maldl.data.splits import group_split  # noqa: E402
-from maldl.eval.stats import curves, markdown_summary  # noqa: E402
+from maldl.eval.report import plot_learning_curves, write_rows_csv  # noqa: E402
+from maldl.eval.stats import markdown_summary  # noqa: E402
 
 SETS = ["in_dist", "tilt_shift", "direction_shift"]
 STRATS = ["random", "uncertainty", "diversity", "hybrid"]
@@ -98,30 +99,15 @@ def main(argv=None):
     name = f"results_aachen_{a.task}_{a.backbone}"
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
-    with open(out / f"{name}.csv", "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=list(rows[0]))
-        w.writeheader()
-        w.writerows(rows)
+    write_rows_csv(rows, out / f"{name}.csv")
 
-    import matplotlib
-    matplotlib.use("Agg")
-    import matplotlib.pyplot as plt
     metric = (lambda s: f"{s}_rmse") if reg else (lambda s: s)
-    fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-    for ax, st in zip(axes, SETS):
-        for s in STRATS:
-            c = curves(rows, s, metric(st))
-            nl = curves(rows, s, "n_labeled").mean(0)
-            ax.plot(nl, c.mean(0), marker="o", label=s)
-            ax.fill_between(nl, c.mean(0) - c.std(0), c.mean(0) + c.std(0), alpha=0.1)
-        ax.axhline(np.mean([b[st] for b in baseline]), ls=":", c="gray",
-                   label="mean predictor" if reg else "majority class")
-        ax.set_title(f"Aachen-Heerlen {a.task} / {st}")
-        ax.set_xlabel("labels")
-        ax.set_ylabel("RMSE of MA area fraction" if reg else "accuracy")
-    axes[0].legend()
-    fig.tight_layout()
-    fig.savefig(out / f"{name}.png", dpi=110)
+    plot_learning_curves(rows, SETS, STRATS, out / f"{name}.png",
+                         metric_columns=[metric(st) for st in SETS],
+                         titles=[f"Aachen-Heerlen {a.task} / {st}" for st in SETS],
+                         ylabel="RMSE of MA area fraction" if reg else "accuracy",
+                         baseline={st: float(np.mean([b[st] for b in baseline])) for st in SETS},
+                         baseline_label="mean predictor" if reg else "majority class")
 
     msz = {k: float(np.mean([s[k] for s in sizes])) for k in sizes[0]}
     head = (f"DINOv2-{a.backbone}; task={a.task}; grouped by steel sample type; mean sizes: "
