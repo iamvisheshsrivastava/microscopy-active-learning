@@ -259,6 +259,28 @@ def test_holm_and_bootstrap():
     assert lo < 4.5 < hi
 
 
+def test_benjamini_hochberg_matches_statsmodels():
+    from maldl.eval.stats import benjamini_hochberg
+    # statsmodels multipletests(p, method="fdr_bh") adjusted values, hard-coded: no new dependency
+    assert benjamini_hochberg([0.01, 0.04, 0.03, 0.005]) == pytest.approx([0.02, 0.04, 0.04, 0.02])
+    raw = [0.2, 0.01, 0.5]
+    adj = benjamini_hochberg(raw)
+    pairs = sorted(zip(raw, adj))
+    assert all(a >= p for p, a in pairs) and all(a <= 1 for _, a in pairs)  # never below raw
+    assert [a for _, a in pairs] == sorted(a for _, a in pairs)  # monotone in raw p order
+
+
+def test_markdown_summary_correction_modes():
+    rows = [{"strategy": s, "seed": sd, "round": r, "m": 0.5 + 0.1 * r + (0.05 if s == "b" else 0)
+             + 0.01 * sd} for s in "ab" for sd in range(6) for r in range(3)]
+    holm_md = markdown_summary(rows, ["a", "b"], ["m"], baseline="a")
+    bh_md = markdown_summary(rows, ["a", "b"], ["m"], baseline="a", correction="bh")
+    assert "Holm-adjusted p" in holm_md and "(Holm " in holm_md and "BH" not in holm_md
+    assert "BH-adjusted p" in bh_md and "(BH " in bh_md and "Holm" not in bh_md
+    with pytest.raises(ValueError):
+        markdown_summary(rows, ["a", "b"], ["m"], baseline="a", correction="bonferroni")
+
+
 def test_end_to_end_smoke():
     torch.manual_seed(0)
     sem, ebsd, y, info = make_paired_dataset(64, seed=0, size=32)

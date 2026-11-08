@@ -1,8 +1,10 @@
-"""Regenerate every results/*_summary.md from the saved CSVs (Holm-adjusted p, bootstrap CIs).
+"""Regenerate every results/*_summary.md from the saved CSVs (Holm-adjusted p by default, or BH).
 
 No experiment is rerun. Any text before the first '## ' heading in an existing summary
-(encoder / majority-class header lines) is preserved.
+(encoder / majority-class header lines) is preserved. Use `--correction bh` for
+Benjamini-Hochberg FDR control instead of Holm.
 """
+import argparse
 import csv
 import sys
 from pathlib import Path
@@ -24,8 +26,12 @@ def load(path):
     return rows
 
 
-def main(results="results"):
-    for path in sorted(Path(results).glob("results_*.csv")):
+def main(argv=None):
+    ap = argparse.ArgumentParser()
+    ap.add_argument("results", nargs="?", default="results")
+    ap.add_argument("--correction", choices=["holm", "bh"], default="holm")
+    a = ap.parse_args(argv)
+    for path in sorted(Path(a.results).glob("results_*.csv")):
         if path.stem == "results_multimodal":
             continue  # different layout; summarised by run_multimodal.py
         rows = load(path)
@@ -43,10 +49,11 @@ def main(results="results"):
         for suf, title in FAMILIES:
             metrics = [f"{s}{suf}" for s in sets if f"{s}{suf}" in cols]
             if metrics and (suf or not any(c.endswith("_rmse") for c in cols)):
-                md += [f"## {title}\n", markdown_summary(rows, strategies, metrics), ""]
+                md += [f"## {title}\n",
+                       markdown_summary(rows, strategies, metrics, correction=a.correction), ""]
         summ.write_text("\n".join(md), encoding="utf-8")
         print("wrote", summ)
 
 
 if __name__ == "__main__":
-    main(*sys.argv[1:2])
+    main()
