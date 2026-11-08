@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .contrastive import intensity_jitter, random_resized_crop
+from .contrastive import _resolve_batch, intensity_jitter, random_resized_crop
 
 
 def pair_augment(sem, ebsd, rng, out=64, strong=False):
@@ -33,6 +33,7 @@ def pretrain_crossmodal(enc_sem, enc_ebsd, sem, ebsd, epochs=15, batch=64, lr=2e
     rng = np.random.default_rng(seed)
     torch.manual_seed(seed)
     xs, xe = torch.from_numpy(sem), torch.from_numpy(ebsd)
+    batch = _resolve_batch(len(xs), batch)
     out = xs.shape[-1]
     hs = nn.Sequential(nn.Linear(enc_sem.dim, 128), nn.ReLU(), nn.Linear(128, 64))
     he = nn.Sequential(nn.Linear(enc_ebsd.dim, 128), nn.ReLU(), nn.Linear(128, 64))
@@ -54,7 +55,7 @@ def pretrain_crossmodal(enc_sem, enc_ebsd, sem, ebsd, epochs=15, batch=64, lr=2e
             opt.step()
             tot += loss.item()
             cnt += 1
-        hist.append(tot / max(cnt, 1))
+        hist.append(tot / cnt)
     for m in mods:
         m.eval().cpu()
     enc_sem.proj, enc_ebsd.proj = hs, he  # aligned space lives after the heads
