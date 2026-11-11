@@ -1,6 +1,7 @@
 """Pool-based active learning on frozen embeddings.
 
-Classification: logistic-regression head, uncertainty = predictive entropy.
+Classification: logistic-regression head, uncertainty = predictive entropy by default
+(least-confidence and margin measures are also available; see run_loop).
 Regression: GP surrogate on the embeddings, uncertainty = predictive std.
 Eval sets: {name: (emb, y_class, y_property)}; classification only needs the first two,
 regression needs the third.
@@ -14,7 +15,7 @@ from sklearn.preprocessing import StandardScaler
 
 from ..eval.calibration import ece, interval_coverage
 from ..models.surrogate import GPSurrogate
-from .strategies import STRATEGIES, entropy
+from .strategies import STRATEGIES, UNCERTAINTY_MEASURES
 
 
 def _fit(emb, y, labeled):
@@ -40,8 +41,18 @@ def _select(strat, emb, unc, labeled, n, b, rng, cost):
 
 
 def run_loop(pool_emb, pool_y, eval_sets, strategy, init=8, batch=8, rounds=8,
-             seed=0, num_classes=4, costs=None):
-    """Classification loop. Returns one dict row per round (incl. round 0)."""
+             seed=0, num_classes=4, costs=None, uncertainty="entropy"):
+    """Classification loop. Returns one dict row per round (incl. round 0).
+
+    `uncertainty` selects the measure used to score unlabeled items:
+    one of "entropy" (default), "least_confidence", "margin".
+    """
+    if uncertainty not in UNCERTAINTY_MEASURES:
+        raise ValueError(
+            f"unknown uncertainty measure {uncertainty!r}; "
+            f"choose from {sorted(UNCERTAINTY_MEASURES)}"
+        )
+    measure = UNCERTAINTY_MEASURES[uncertainty]
     rng = np.random.default_rng(seed)
     n = len(pool_y)
     costs = np.ones(n) if costs is None else np.asarray(costs, dtype=float)
@@ -63,7 +74,7 @@ def run_loop(pool_emb, pool_y, eval_sets, strategy, init=8, batch=8, rounds=8,
         rows.append(row)
         if r == rounds:
             break
-        unc = entropy(_proba(sc, clf, pool_emb, num_classes))
+        unc = measure(_proba(sc, clf, pool_emb, num_classes))
         labeled = _select(strat, pool_emb, unc, labeled, n, batch, rng, costs)
     return rows
 

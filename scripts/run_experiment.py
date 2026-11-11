@@ -32,6 +32,8 @@ def main(argv=None):
     ap.add_argument("--batch", type=int, default=8)
     ap.add_argument("--init", type=int, default=8)
     ap.add_argument("--n-test", type=int, default=300)
+    ap.add_argument("--uncertainty", default="entropy",
+                    choices=["entropy", "least_confidence", "margin"])
     ap.add_argument("--norm-input", action="store_true")
     ap.add_argument("--strong-aug", action="store_true")
     ap.add_argument("--device", default="cpu")
@@ -54,7 +56,7 @@ def main(argv=None):
         evals = build_eval_sets(enc, seed, n=a.n_test)
         for s in STRATEGIES:
             for r in run_loop(emb, y, evals, s, a.init, a.batch, a.rounds, seed,
-                              costs=info["cost"]):
+                              costs=info["cost"], uncertainty=a.uncertainty):
                 rows.append({"strategy": s, "seed": seed, **r})
     name = f"results{a.tag}"
     with open(out / f"{name}.csv", "w", newline="") as f:
