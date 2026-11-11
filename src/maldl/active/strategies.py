@@ -12,6 +12,26 @@ def entropy(probs):
     return -(p * np.log(p)).sum(1)
 
 
+def least_confidence(probs):
+    """1 - max p: larger means the model's top class is less certain."""
+    return 1.0 - np.asarray(probs).max(1)
+
+
+def margin(probs):
+    """1 - (p1 - p2) over the top two classes: larger means a closer call."""
+    p = np.sort(np.asarray(probs), axis=1)
+    if p.shape[1] < 2:
+        return np.zeros(len(p))
+    return 1.0 - (p[:, -1] - p[:, -2])
+
+
+UNCERTAINTY_MEASURES = {
+    "entropy": entropy,
+    "least_confidence": least_confidence,
+    "margin": margin,
+}
+
+
 def random_strategy(emb, unc, labeled, unlabeled, b, rng, cost=None):
     return rng.choice(unlabeled, size=min(b, len(unlabeled)), replace=False)
 
